@@ -17,7 +17,7 @@ managing and publishing multiple packages in the same repository.
 3. Run the setup task: `yarn run setup`.
 4. Ensure that your `SPLUNK_HOME` environment variable is set and call `yarn run link:app` from the `packages/kv-editor` folder. 
 This links this KV store app with your local Splunk installation
-5. Call `yarn run start` to run the local development server
+5. Call `yarn run start` from the root folder to run the local development server
 6. Go to http://localhost:8000/en-US/app/kv-editor/search and call the following SPL query to fill the KV store:
 
 ```
