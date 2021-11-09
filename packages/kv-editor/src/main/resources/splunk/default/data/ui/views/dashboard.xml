@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="kv-editor:/templates/start.html" type="html">
+	<label>KV Store Editor</label>
+</view>
