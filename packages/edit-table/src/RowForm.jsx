@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ControlGroup from '@splunk/react-ui/ControlGroup';
 import Text from '@splunk/react-ui/Text';
-import T from 'prop-types';
+import PropTypes from 'prop-types';
 import Button from '@splunk/react-ui/Button';
 
 const RowFormKeyStyle = {
@@ -34,9 +34,7 @@ const RowForm = ({ onSave, data }) => {
                 <span style={RowFormKeyStyle}>Key</span>
                 <span style={RowFormValueStyle}>Value</span>
             </div>
-            <div
-                style={RowFormListStyle}
-            >
+            <div style={RowFormListStyle}>
                 {Object.keys(data).map((key) => (
                     <ControlGroup label={key} key={`group_${key}`}>
                         <Text
@@ -44,7 +42,7 @@ const RowForm = ({ onSave, data }) => {
                             placeholder="value"
                             key={`text_${key}`}
                             name={key}
-                            value={currentData[key]}
+                            value={currentData[key].toString()}
                             onChange={handleChange}
                         />
                     </ControlGroup>
@@ -58,8 +56,8 @@ const RowForm = ({ onSave, data }) => {
 };
 
 RowForm.propTypes = {
-    onSave: T.func,
-    data: T.object,
+    onSave: PropTypes.func,
+    data: PropTypes.object,
 };
 
 export default RowForm;
