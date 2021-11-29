@@ -4,8 +4,7 @@ import DashboardCore from '@splunk/dashboard-core';
 import { DashboardContextProvider } from '@splunk/dashboard-context';
 import EnterpriseViewOnlyPreset from '@splunk/dashboard-presets/EnterpriseViewOnlyPreset';
 import SplunkThemeProvider from '@splunk/themes/SplunkThemeProvider';
-import EditTable from '@splunk/edit-table/EditTable';
-import RefreshButton from '@splunk/edit-table/RefreshButton';
+import { EditTable, RefreshButton } from '@splunk/edit-table';
 
 import definition from './definition.json';
 

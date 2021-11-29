@@ -18,7 +18,7 @@
     "test:ci": "JEST_JUNIT_OUTPUT_DIR=./test-reports JEST_JUNIT_OUTPUT_NAME=unit-results.xml JEST_JUNIT_CLASSNAME=unit yarn run test --ci --reporters=default jest-junit --coverage --coverageDirectory=coverage_report/coverage_maps_unit --coverageReporters=json",
     "test:watch": "jest --watch"
   },
-  "main": "EditTable.js",
+  "main": "index.js",
   "dependencies": {
     "@splunk/dashboard-action-buttons": "^23.4.0",
     "@splunk/react-ui": "^4.4.0",

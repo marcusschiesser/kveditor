@@ -4,7 +4,7 @@ const baseComponentConfig = require('@splunk/webpack-configs/component.config').
 
 module.exports = webpackMerge(baseComponentConfig, {
     entry: {
-        EditTable: path.join(__dirname, 'src/EditTable.jsx'),
+        index: path.join(__dirname, 'src/index.js'),
     },
     output: {
         path: path.join(__dirname),
