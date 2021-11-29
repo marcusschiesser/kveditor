@@ -51,7 +51,11 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                     message: 'Row successfully updated',
                 });
                 api.refreshVisualization(id);
-                // TODO: get dashboardAPI from RefreshButton and call dashboardApi.refreshVisualization to reload data
+                setTimeout(() => {
+                    setInfoMessage({
+                        visible: false,
+                    });
+                }, 1000);
             })
             .catch((err) => {
                 setInfoMessage({
