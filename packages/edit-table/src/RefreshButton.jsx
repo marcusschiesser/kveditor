@@ -4,7 +4,7 @@ import Refresh from '@splunk/dashboard-icons/Refresh';
 import PropTypes from 'prop-types';
 import { useDashboardApi } from './DashboardApiContext';
 
-const RefreshButton = ({ itemId, dashboardApi, screenReaderText }) => {
+const RefreshButton = ({ itemId, dashboardApi, screenReaderText, visible }) => {
     const { setApi } = useDashboardApi();
     useEffect(() => {
         setApi(dashboardApi);
@@ -18,11 +18,16 @@ const RefreshButton = ({ itemId, dashboardApi, screenReaderText }) => {
     };
 
     return (
-        <ActionButton
-            data-test="RefreshButton" // for testing
-            onClick={handleOnClick}
-            icon={<Refresh screenReaderText={screenReaderText} />} // icon for this button
-        />
+        <div>
+            {visible && (
+                <ActionButton
+                    visible={visible}
+                    data-test="RefreshButton" // for testing
+                    onClick={handleOnClick}
+                    icon={<Refresh screenReaderText={screenReaderText} />} // icon for this button
+                />
+            )}
+        </div>
     );
 };
 
@@ -30,6 +35,11 @@ RefreshButton.propTypes = {
     itemId: PropTypes.string,
     dashboardApi: PropTypes.object,
     screenReaderText: PropTypes.string,
+    visible: PropTypes.bool,
+};
+
+RefreshButton.defaultProps = {
+    visible: false,
 };
 
 export default RefreshButton;
