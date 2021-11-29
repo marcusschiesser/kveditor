@@ -4,7 +4,7 @@ import DashboardCore from '@splunk/dashboard-core';
 import { DashboardContextProvider } from '@splunk/dashboard-context';
 import EnterpriseViewOnlyPreset from '@splunk/dashboard-presets/EnterpriseViewOnlyPreset';
 import SplunkThemeProvider from '@splunk/themes/SplunkThemeProvider';
-import { EditTable, RefreshButton } from '@splunk/edit-table';
+import { EditTable, RefreshButton, DashboardApiProvider } from '@splunk/edit-table';
 
 import definition from './definition.json';
 
@@ -27,13 +27,15 @@ const DashboardExample = () => {
     return (
         <SplunkThemeProvider {...themeToVariant.prisma}>
             <DashboardContextProvider>
-                <DashboardCore
-                    width="100%"
-                    height="100%"
-                    preset={customPreset}
-                    definition={definition}
-                    actionMenus={[<RefreshButton key="refresh" />]}
-                />
+                <DashboardApiProvider>
+                    <DashboardCore
+                        width="100%"
+                        height="100%"
+                        preset={customPreset}
+                        definition={definition}
+                        actionMenus={[<RefreshButton key="refresh" />]}
+                    />
+                </DashboardApiProvider>
             </DashboardContextProvider>
         </SplunkThemeProvider>
     );

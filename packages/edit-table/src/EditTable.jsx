@@ -8,8 +8,11 @@ import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualizati
 
 import ModalComponent from './ModalComponent';
 import { updateKVEntry } from './data';
+import { useDashboardApi } from './DashboardApiContext';
 
-const EditTable = ({ dataSources, onRequestParamsChange, width, height }) => {
+const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
+    const { api } = useDashboardApi();
+
     const style = useMemo(
         () => ({
             height,
@@ -47,6 +50,7 @@ const EditTable = ({ dataSources, onRequestParamsChange, width, height }) => {
                     type: 'success',
                     message: 'Row successfully updated',
                 });
+                api.refreshVisualization(id);
                 // TODO: get dashboardAPI from RefreshButton and call dashboardApi.refreshVisualization to reload data
             })
             .catch((err) => {
