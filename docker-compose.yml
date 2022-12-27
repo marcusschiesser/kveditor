@@ -1,0 +1,14 @@
+version: "3.6"
+
+services:
+  app:
+    build:
+      context: ./splunk
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./splunk/packages/kv-editor/stage:/opt/splunk/etc/apps/kv-editor
+    env_file:
+      - splunk.env
+    ports:
+      - 8000:8000
