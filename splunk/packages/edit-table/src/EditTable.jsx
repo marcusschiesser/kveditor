@@ -3,12 +3,16 @@ import React, { useState, useMemo } from 'react';
 
 import Table from '@splunk/visualizations/Table';
 import Message from '@splunk/react-ui/Message';
+import Button from '@splunk/react-ui/Button';
 
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
 
 import ModalComponent from './ModalComponent';
-import { updateKVEntry } from './data';
+import { updateKVEntry, getAllKVEntries } from './data';
 import { useDashboardApi } from './DashboardApiContext';
+import { downloadFile, formatCSVData } from './utils/file';
+
+const COLLECTION_NAME = 'example_collection';
 
 const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
     const { api } = useDashboardApi();
@@ -25,6 +29,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
     const [openModal, setOpenModal] = useState(false);
     const [infoMessage, setInfoMessage] = useState({ visible: false });
     const [rowData, setRowData] = useState({});
+    const [downloading, setDownloading] = useState(false);
 
     const handleEditActionClick = (_, data) => {
         setRowData(data);
@@ -43,7 +48,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         setOpenModal(false);
         setInfoMessage({ visible: true, message: 'Updating...' });
         const defaultErrorMsg = 'Error updating row. Please try again.';
-        updateKVEntry('example_collection', row._key, row, defaultErrorMsg)
+        updateKVEntry(COLLECTION_NAME, row._key, row, defaultErrorMsg)
             .then(() => {
                 setInfoMessage({
                     visible: true,
@@ -87,6 +92,31 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         handleEditActionClick(undefined, extractRow(e.payload));
     };
 
+    const handleDownloadAsCSV = async () => {
+        setDownloading(true);
+        const defaultErrorMsg = 'Error downloading csv. Please try again.';
+        const emptyErrorMsg = 'No data to download.';
+
+        try {
+            const data = await getAllKVEntries(COLLECTION_NAME, defaultErrorMsg);
+            if (data == null || data.length === 0) {
+                throw new Error(emptyErrorMsg);
+            }
+
+            const omitColumns = ['_user'];
+            const csvRawData = formatCSVData(data, omitColumns);
+            downloadFile(csvRawData, 'text/csv', COLLECTION_NAME);
+        } catch (err) {
+            setInfoMessage({
+                visible: true,
+                type: 'error',
+                message: err.message,
+            });
+        }
+
+        setDownloading(false);
+    };
+
     return (
         <div style={style}>
             {infoMessage.visible && (
@@ -120,6 +150,14 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onCellClick={handleCellClick}
                 onRequestParamsChange={onRequestParamsChange}
             />
+            {/* TODO(thucpn): Setup CSS module */}
+            <Button
+                disabled={downloading}
+                onClick={handleDownloadAsCSV}
+                style={{ position: 'absolute', bottom: 0, left: 0 }}
+            >
+                Download as CSV
+            </Button>
         </div>
     );
 };
