@@ -4,15 +4,19 @@ import React, { useState, useMemo } from 'react';
 import Table from '@splunk/visualizations/Table';
 import Message from '@splunk/react-ui/Message';
 import Button from '@splunk/react-ui/Button';
+import P from '@splunk/react-ui/Paragraph';
 
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
 
 import ModalComponent from './ModalComponent';
-import { updateKVEntry, getAllKVEntries } from './data';
+import { updateKVEntry, getAllKVEntries, batchInsertKVEntries } from './data';
 import { useDashboardApi } from './DashboardApiContext';
 import { downloadFile, formatCSVData } from './utils/file';
+import SingleFileUpload from './components/SingleFileUpload';
+import AbstractModal from './components/AbstractModal';
 
 const COLLECTION_NAME = 'example_collection';
+const FILE_SIZE_LIMIT = 1;
 
 const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
     const { api } = useDashboardApi();
@@ -30,6 +34,10 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
     const [infoMessage, setInfoMessage] = useState({ visible: false });
     const [rowData, setRowData] = useState({});
     const [downloading, setDownloading] = useState(false);
+
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadedCSVContent, setUploadedCSVContent] = useState();
 
     const handleEditActionClick = (_, data) => {
         setRowData(data);
@@ -117,6 +125,51 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         setDownloading(false);
     };
 
+    const convertCSVToJSON = (csvData) => {
+        console.log(csvData);
+        const sample = [
+            {
+                Score: '86',
+                Title: 'Awaken',
+                Year: '1968',
+            },
+            {
+                Score: 17,
+                Title: 'Kayz',
+                Year: 1970,
+            },
+        ];
+        return sample;
+    };
+
+    const onOpenUploadModal = () => setUploadModalOpen(true);
+    const onCloseUploadModal = () => setUploadModalOpen(false);
+    const handleFileChange = (fileContent) => setUploadedCSVContent(fileContent);
+    const handleUploadCSV = async () => {
+        setUploading(true);
+        const defaultErrorMsg = 'Error uploading csv. Please try again.';
+        const emptyErrorMsg = 'No data to upload.';
+
+        try {
+            const jsonData = convertCSVToJSON(uploadedCSVContent);
+            if (jsonData == null || jsonData.length === 0) {
+                throw new Error(emptyErrorMsg);
+            }
+
+            const result = await batchInsertKVEntries(COLLECTION_NAME, jsonData, defaultErrorMsg);
+            console.log(result);
+        } catch (err) {
+            setInfoMessage({
+                visible: true,
+                type: 'error',
+                message: err.message,
+            });
+        }
+
+        setUploading(false);
+        setUploadModalOpen(false);
+    };
+
     return (
         <div style={style}>
             {infoMessage.visible && (
@@ -128,21 +181,39 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                     {infoMessage.message}
                 </Message>
             )}
+            {/* TODO(thucpn): Refactor this modal component */}
             <ModalComponent
                 open={openModal}
                 data={rowData}
                 onClose={handleOnClose}
                 onSave={handleOnSave}
             />
-            {/* Use ReadOnlyTable if you want to add action buttons for each row
-                But currently, it doesn't support pagination and sorting
-
-                import ReadOnlyTable from './ReadOnlyTable';
-                 <ReadOnlyTable
-                dataSources={dataSources}
-                onEditActionClick={handleEditActionClick}
-                onRequestParamsChange={onRequestParamsChange}
-            /> */}
+            <AbstractModal
+                title="Upload CSV File"
+                onClose={onCloseUploadModal}
+                open={uploadModalOpen}
+            >
+                <P>
+                    Replace all current data in KV Store with new data from CSV File. File size limit:{' '}
+                    {FILE_SIZE_LIMIT} GB.
+                </P>
+                <SingleFileUpload fileType=".csv" handleFileChange={handleFileChange} />
+                <div
+                    style={{
+                        display: 'flex',
+                        width: 'fit-content',
+                        marginLeft: 'auto',
+                        marginTop: '2rem',
+                    }}
+                >
+                    <Button appearance="secondary" onClick={onCloseUploadModal}>
+                        Cancel
+                    </Button>
+                    <Button disabled={!uploadedCSVContent || uploading} onClick={handleUploadCSV}>
+                        Confirm Upload
+                    </Button>
+                </div>
+            </AbstractModal>
             <Table
                 width={width}
                 height={height}
@@ -150,14 +221,12 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onCellClick={handleCellClick}
                 onRequestParamsChange={onRequestParamsChange}
             />
-            {/* TODO(thucpn): Setup CSS module */}
-            <Button
-                disabled={downloading}
-                onClick={handleDownloadAsCSV}
-                style={{ position: 'absolute', bottom: 0, left: 0 }}
-            >
-                Download as CSV
-            </Button>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, display: 'flex' }}>
+                <Button disabled={downloading} onClick={handleDownloadAsCSV}>
+                    Download as CSV
+                </Button>
+                <Button onClick={onOpenUploadModal}>Upload CSV</Button>
+            </div>
         </div>
     );
 };
