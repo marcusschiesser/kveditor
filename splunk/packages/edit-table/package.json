@@ -23,7 +23,8 @@
     "@splunk/dashboard-action-buttons": "^23.4.0",
     "@splunk/react-ui": "^4.4.0",
     "@splunk/splunk-utils": "^2.1.0",
-    "@splunk/themes": "^0.8.0"
+    "@splunk/themes": "^0.8.0",
+    "csvtojson": "^2.0.10"
   },
   "devDependencies": {
     "@babel/core": "^7.2.0",

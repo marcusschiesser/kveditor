@@ -1,22 +1,32 @@
 /* eslint-disable no-underscore-dangle */
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import Table from '@splunk/visualizations/Table';
-import Message from '@splunk/react-ui/Message';
 import Button from '@splunk/react-ui/Button';
+import Message from '@splunk/react-ui/Message';
 import P from '@splunk/react-ui/Paragraph';
+import Table from '@splunk/visualizations/Table';
+import Upload from '@splunk/react-icons/Upload';
 
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
 
-import ModalComponent from './ModalComponent';
-import { updateKVEntry, getAllKVEntries, batchInsertKVEntries } from './data';
-import { useDashboardApi } from './DashboardApiContext';
-import { downloadFile, formatCSVData } from './utils/file';
-import SingleFileUpload from './components/SingleFileUpload';
+import * as csv from 'csvtojson';
 import AbstractModal from './components/AbstractModal';
+import SingleFileUpload from './components/SingleFileUpload';
+import { useDashboardApi } from './DashboardApiContext';
+import { getAllKVEntries, updateKVEntry, batchInsertKVEntries, deleteAllKVEntries } from './data';
+import ModalComponent from './ModalComponent';
+import {
+    checkJsonDataCorrectFormat,
+    downloadFile,
+    formatCSVData,
+    formatJsonData,
+} from './utils/file';
 
 const COLLECTION_NAME = 'example_collection';
-const FILE_SIZE_LIMIT = 1;
+
+// TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
+const FILE_SIZE_LIMIT_GB = 1;
+const FILE_SIZE_LIMIT_BYTE = FILE_SIZE_LIMIT_GB * 1024 * 1024 * 1024;
 
 const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
     const { api } = useDashboardApi();
@@ -125,39 +135,73 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         setDownloading(false);
     };
 
-    const convertCSVToJSON = (csvData) => {
-        console.log(csvData);
-        const sample = [
-            {
-                Score: '86',
-                Title: 'Awaken',
-                Year: '1968',
-            },
-            {
-                Score: 17,
-                Title: 'Kayz',
-                Year: 1970,
-            },
-        ];
-        return sample;
+    const getTableMetaData = () => {
+        const data = dataSources?.primary?.data;
+        const meta = dataSources?.primary?.meta;
+
+        if (data == null || meta == null) {
+            return null;
+        }
+
+        const idColumnKey = '_key';
+        const dataFields = data.fields
+            .map((field) => field.name)
+            .filter((name) => name !== idColumnKey);
+        const totalItems = meta.resultCount;
+
+        return {
+            dataFields,
+            totalItems,
+        };
     };
 
     const onOpenUploadModal = () => setUploadModalOpen(true);
-    const onCloseUploadModal = () => setUploadModalOpen(false);
+    const onCloseUploadModal = () => {
+        setUploadModalOpen(false);
+        setUploadedCSVContent(undefined);
+    };
     const handleFileChange = (fileContent) => setUploadedCSVContent(fileContent);
     const handleUploadCSV = async () => {
+        const tableMetadata = getTableMetaData();
+        if (tableMetadata == null) {
+            return;
+        }
+
         setUploading(true);
-        const defaultErrorMsg = 'Error uploading csv. Please try again.';
+        const { dataFields, totalItems } = tableMetadata;
         const emptyErrorMsg = 'No data to upload.';
+        const emptyCSVErrorMsg = 'CSV file is empty.';
+        const dataFieldErrorMsg = 'CSV file have no enough data fields.';
+        const deleteErrorMsg = 'Error deleting all entries. Please try again.';
+        const uploadErrorMsg = 'Error uploading csv. Please try again.';
 
         try {
-            const jsonData = convertCSVToJSON(uploadedCSVContent);
-            if (jsonData == null || jsonData.length === 0) {
+            if (uploadedCSVContent == null) {
                 throw new Error(emptyErrorMsg);
             }
 
-            const result = await batchInsertKVEntries(COLLECTION_NAME, jsonData, defaultErrorMsg);
-            console.log(result);
+            const jsonData = await csv().fromString(uploadedCSVContent);
+            if (jsonData == null || jsonData.length === 0) {
+                throw new Error(emptyCSVErrorMsg);
+            }
+
+            const isCorrectFormat = checkJsonDataCorrectFormat(jsonData, dataFields);
+            if (!isCorrectFormat) {
+                throw new Error(dataFieldErrorMsg);
+            }
+
+            const formattedJsonData = formatJsonData(jsonData, dataFields);
+
+            await deleteAllKVEntries(COLLECTION_NAME, deleteErrorMsg);
+            await batchInsertKVEntries(COLLECTION_NAME, formattedJsonData, uploadErrorMsg);
+
+            setInfoMessage({
+                visible: true,
+                type: 'success',
+                message: `CSV file successfully uploaded. Removed ${totalItems} items and added ${formattedJsonData.length} items.`,
+            });
+
+            api.refreshVisualization(id);
         } catch (err) {
             setInfoMessage({
                 visible: true,
@@ -168,12 +212,32 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
 
         setUploading(false);
         setUploadModalOpen(false);
+        setUploadedCSVContent(undefined);
     };
+
+    const data = dataSources?.primary?.data;
+    const meta = dataSources?.primary?.meta;
+    if (data == null || meta == null) {
+        return (
+            <div style={style}>
+                <Message appearance="fill" type="info">
+                    Loading Table...
+                </Message>
+            </div>
+        );
+    }
 
     return (
         <div style={style}>
             {infoMessage.visible && (
                 <Message
+                    style={{
+                        width: '30%',
+                        position: 'absolute',
+                        top: '-2rem',
+                        right: 0,
+                        zIndex: 100,
+                    }}
                     appearance="fill"
                     type={infoMessage.type || 'info'}
                     onRequestRemove={handleMessageRemove}
@@ -181,7 +245,6 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                     {infoMessage.message}
                 </Message>
             )}
-            {/* TODO(thucpn): Refactor this modal component */}
             <ModalComponent
                 open={openModal}
                 data={rowData}
@@ -193,11 +256,17 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onClose={onCloseUploadModal}
                 open={uploadModalOpen}
             >
-                <P>
-                    Replace all current data in KV Store with new data from CSV File. File size limit:{' '}
-                    {FILE_SIZE_LIMIT} GB.
+                <P style={{ width: 500 }}>
+                    Replace all current data in KV Store with new data from CSV File. This action
+                    cannot be undone, please make sure you have a backup of your data. <br />
+                    <br /> <strong>File size limit: {FILE_SIZE_LIMIT_GB} GB</strong>
                 </P>
-                <SingleFileUpload fileType=".csv" handleFileChange={handleFileChange} />
+                <SingleFileUpload
+                    accept=".csv"
+                    fileType="text/csv"
+                    sizeLimit={FILE_SIZE_LIMIT_BYTE}
+                    handleFileChange={handleFileChange}
+                />
                 <div
                     style={{
                         display: 'flex',
@@ -209,7 +278,11 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                     <Button appearance="secondary" onClick={onCloseUploadModal}>
                         Cancel
                     </Button>
-                    <Button disabled={!uploadedCSVContent || uploading} onClick={handleUploadCSV}>
+                    <Button
+                        icon={<Upload />}
+                        disabled={!uploadedCSVContent || uploading}
+                        onClick={handleUploadCSV}
+                    >
                         Confirm Upload
                     </Button>
                 </div>
