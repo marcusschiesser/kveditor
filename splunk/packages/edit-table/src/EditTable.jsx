@@ -1,16 +1,19 @@
 /* eslint-disable no-underscore-dangle */
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import Table from '@splunk/visualizations/Table';
-import Message from '@splunk/react-ui/Message';
 import Button from '@splunk/react-ui/Button';
+import Message from '@splunk/react-ui/Message';
+import Table from '@splunk/visualizations/Table';
 
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
 
-import ModalComponent from './ModalComponent';
-import { updateKVEntry, getAllKVEntries } from './data';
+import KVStoreUploader from './components/KVStoreUploader';
 import { useDashboardApi } from './DashboardApiContext';
-import { downloadFile, formatCSVData } from './utils/file';
+import { getAllKVEntries, updateKVEntry } from './data';
+import ModalComponent from './ModalComponent';
+import { formatCSVData } from './utils/csv';
+import { downloadFile } from './utils/file';
+import { getTableMetaData } from './utils/table';
 
 const COLLECTION_NAME = 'example_collection';
 
@@ -27,9 +30,14 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
     );
 
     const [openModal, setOpenModal] = useState(false);
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [infoMessage, setInfoMessage] = useState({ visible: false });
     const [rowData, setRowData] = useState({});
     const [downloading, setDownloading] = useState(false);
+
+    const refreshVisualization = () => {
+        api.refreshVisualization(id);
+    };
 
     const handleEditActionClick = (_, data) => {
         setRowData(data);
@@ -55,7 +63,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                     type: 'success',
                     message: 'Row successfully updated',
                 });
-                api.refreshVisualization(id);
+                refreshVisualization();
                 setTimeout(() => {
                     setInfoMessage({
                         visible: false,
@@ -117,10 +125,30 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         setDownloading(false);
     };
 
+    const onOpenUploadModal = () => setUploadModalOpen(true);
+
+    const tableMetadata = getTableMetaData(dataSources);
+    if (tableMetadata == null) {
+        return (
+            <div style={style}>
+                <Message appearance="fill" type="info">
+                    Loading Table...
+                </Message>
+            </div>
+        );
+    }
+
     return (
         <div style={style}>
             {infoMessage.visible && (
                 <Message
+                    style={{
+                        width: '30%',
+                        position: 'absolute',
+                        top: '-2rem',
+                        right: 0,
+                        zIndex: 100,
+                    }}
                     appearance="fill"
                     type={infoMessage.type || 'info'}
                     onRequestRemove={handleMessageRemove}
@@ -134,15 +162,24 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onClose={handleOnClose}
                 onSave={handleOnSave}
             />
-            {/* Use ReadOnlyTable if you want to add action buttons for each row
+            <KVStoreUploader
+                uploadModalOpen={uploadModalOpen}
+                setUploadModalOpen={setUploadModalOpen}
+                collectionName={COLLECTION_NAME}
+                tableMetadata={tableMetadata}
+                setInfoMessage={setInfoMessage}
+                refreshVisualization={refreshVisualization}
+            />
+            {/* 
+                Use ReadOnlyTable if you want to add action buttons for each row
                 But currently, it doesn't support pagination and sorting
-
                 import ReadOnlyTable from './ReadOnlyTable';
-                 <ReadOnlyTable
-                dataSources={dataSources}
-                onEditActionClick={handleEditActionClick}
-                onRequestParamsChange={onRequestParamsChange}
-            /> */}
+                <ReadOnlyTable
+                    dataSources={dataSources}
+                    onEditActionClick={handleEditActionClick}
+                    onRequestParamsChange={onRequestParamsChange}
+                /> 
+            */}
             <Table
                 width={width}
                 height={height}
@@ -150,14 +187,12 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onCellClick={handleCellClick}
                 onRequestParamsChange={onRequestParamsChange}
             />
-            {/* TODO(thucpn): Setup CSS module */}
-            <Button
-                disabled={downloading}
-                onClick={handleDownloadAsCSV}
-                style={{ position: 'absolute', bottom: 0, left: 0 }}
-            >
-                Download as CSV
-            </Button>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, display: 'flex' }}>
+                <Button disabled={downloading} onClick={handleDownloadAsCSV}>
+                    Download as CSV
+                </Button>
+                <Button onClick={onOpenUploadModal}>Upload CSV</Button>
+            </div>
         </div>
     );
 };

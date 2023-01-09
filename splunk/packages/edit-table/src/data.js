@@ -40,4 +40,43 @@ function getAllKVEntries(collection, defaultErrorMsg) {
         .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
 }
 
-export { updateKVEntry, getAllKVEntries };
+function deleteAllKVEntries(collection, defaultErrorMsg) {
+    const url = createRESTURL(`storage/collections/data/${collection}`, {
+        app: config.app,
+        sharing: 'app',
+    });
+    return fetch(url, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+            'X-Splunk-Form-Key': config.CSRFToken,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+        .then(handleResponse(204))
+        .catch(handleError(defaultErrorMsg))
+        .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
+}
+
+function batchInsertKVEntries(collection, data, defaultErrorMsg) {
+    const url = createRESTURL(`storage/collections/data/${collection}/batch_save`, {
+        app: config.app,
+        sharing: 'app',
+    });
+
+    return fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'X-Splunk-Form-Key': config.CSRFToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+        .then(handleResponse(201))
+        .catch(handleError(defaultErrorMsg))
+        .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
+}
+
+export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
