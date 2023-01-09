@@ -25,7 +25,7 @@ export const formatCSVData = (data, omitColumns) => {
     return `${headerLine}\n${csvRawData}`;
 };
 
-export const convertCSVStringToJSON = async (csvString) => {
+export const convertToJSONArrayFromCSVString = async (csvString) => {
     const jsonData = await csv().fromString(csvString);
     return jsonData;
 };

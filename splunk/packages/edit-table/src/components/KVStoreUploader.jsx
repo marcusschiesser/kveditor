@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import { batchInsertKVEntries, deleteAllKVEntries } from '../data';
 import AbstractModal from './AbstractModal';
 import SingleFileUpload from './SingleFileUpload';
-import { checkJsonDataCorrectFormat, projectFields } from '../utils/json';
-import { convertCSVStringToJSON } from '../utils/csv';
+import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
+import { convertToJSONArrayFromCSVString } from '../utils/csv';
 
 // TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
 const FILE_SIZE_LIMIT_GB = 1;
@@ -48,12 +48,12 @@ export default function KVStoreUploader({
                 throw new Error(emptyErrorMsg);
             }
 
-            const jsonData = await convertCSVStringToJSON(uploadedCSVContent);
+            const jsonData = await convertToJSONArrayFromCSVString(uploadedCSVContent);
             if (jsonData == null || jsonData.length === 0) {
                 throw new Error(emptyCSVErrorMsg);
             }
 
-            const isCorrectFormat = checkJsonDataCorrectFormat(jsonData, dataFields);
+            const isCorrectFormat = checkJsonArrayCorrectFormat(jsonData, dataFields);
             if (!isCorrectFormat) {
                 throw new Error(dataFieldErrorMsg);
             }

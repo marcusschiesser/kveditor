@@ -2,8 +2,8 @@ export const checkJsonObjectCorrectFormat = (jsonObject, dataFields) => {
     return dataFields.every((field) => field in jsonObject);
 };
 
-export const checkJsonDataCorrectFormat = (jsonData, dataFields) => {
-    return jsonData.every((jsonObject) => checkJsonObjectCorrectFormat(jsonObject, dataFields));
+export const checkJsonArrayCorrectFormat = (jsonArray, dataFields) => {
+    return jsonArray.every((jsonObject) => checkJsonObjectCorrectFormat(jsonObject, dataFields));
 };
 
 /**
