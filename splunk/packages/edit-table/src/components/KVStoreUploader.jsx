@@ -3,15 +3,23 @@ import Button from '@splunk/react-ui/Button';
 import P from '@splunk/react-ui/Paragraph';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import styled from 'styled-components';
 import { batchInsertKVEntries, deleteAllKVEntries } from '../data';
+import { convertToJSONArrayFromCSVString } from '../utils/csv';
+import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
 import AbstractModal from './AbstractModal';
 import SingleFileUpload from './SingleFileUpload';
-import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
-import { convertToJSONArrayFromCSVString } from '../utils/csv';
 
 // TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
 const FILE_SIZE_LIMIT_GB = 1;
 const FILE_SIZE_LIMIT_BYTE = FILE_SIZE_LIMIT_GB * 1024 * 1024 * 1024;
+
+const ModalButtonActionGroup = styled.div`
+    display: flex;
+    width: fit-content;
+    margin-left: auto;
+    margin-top: 2rem;
+`;
 
 // TODO(thucpn): So many props here, in the feature, we can consider create EditTable context to pass down props
 export default function KVStoreUploader({
@@ -96,14 +104,7 @@ export default function KVStoreUploader({
                 sizeLimit={FILE_SIZE_LIMIT_BYTE}
                 handleFileChange={handleFileChange}
             />
-            <div
-                style={{
-                    display: 'flex',
-                    width: 'fit-content',
-                    marginLeft: 'auto',
-                    marginTop: '2rem',
-                }}
-            >
+            <ModalButtonActionGroup>
                 <Button appearance="secondary" onClick={onCloseUploadModal}>
                     Cancel
                 </Button>
@@ -114,7 +115,7 @@ export default function KVStoreUploader({
                 >
                     Confirm Upload
                 </Button>
-            </div>
+            </ModalButtonActionGroup>
         </AbstractModal>
     );
 }
