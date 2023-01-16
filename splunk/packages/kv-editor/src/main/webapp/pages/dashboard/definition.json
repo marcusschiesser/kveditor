@@ -44,7 +44,7 @@
     "ds_search_1": {
       "type": "ds.search",
       "options": {
-        "query": "| inputlookup example_kv",
+        "query": "| inputlookup $collection$",
         "queryParameters": {
           "earliest": "0"
         }
@@ -52,7 +52,16 @@
     }
   },
   "defaults": {},
-  "inputs": {},
+  "inputs": {
+    "default_collection_name": {
+      "type": "input.text",
+      "options": {
+        "defaultValue": "example_kv",
+        "token": "collection"
+      },
+      "title": ""
+    }
+  },
   "layout": {
     "type": "absolute",
     "options": {
@@ -93,7 +102,7 @@
         }
       }
     ],
-    "globalInputs": []
+    "globalInputs": ["default_collection_name"]
   },
   "description": "",
   "title": "KV Store Editor"

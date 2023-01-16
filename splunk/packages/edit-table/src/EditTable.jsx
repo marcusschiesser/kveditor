@@ -15,7 +15,7 @@ import { formatCSVData } from './utils/csv';
 import { downloadFile } from './utils/file';
 import { getTableMetaData } from './utils/table';
 
-const COLLECTION_NAME = 'example_collection';
+const COLLECTION_NAME = 'example_kv';
 
 const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
     const { api } = useDashboardApi();

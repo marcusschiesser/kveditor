@@ -8,6 +8,15 @@ import { EditTable, RefreshButton, DashboardApiProvider } from '@splunk/edit-tab
 
 import definition from './definition.json';
 
+const collectionName = definition.inputs.default_collection_name.options.defaultValue;
+console.log('definition', collectionName);
+
+function withCollectionName(Component) {
+    return function WrappedComponent(props) {
+        return <Component {...props} collectionName={collectionName} />;
+    };
+}
+
 const themeToVariant = {
     enterprise: { colorScheme: 'light', family: 'enterprise' },
     enterpriseDark: { colorScheme: 'dark', family: 'enterprise' },
@@ -19,25 +28,34 @@ const customPreset = {
     ...EnterpriseViewOnlyPreset,
     visualizations: {
         ...EnterpriseViewOnlyPreset.visualizations,
-        'splunk.EditTable': EditTable,
+        'splunk.EditTable': withCollectionName(EditTable),
     },
 };
 
+const customStyle = `
+    div[data-input-id="default_collection_name"]{
+        display: none;
+    }
+`;
+
 const DashboardExample = () => {
     return (
-        <SplunkThemeProvider {...themeToVariant.prisma}>
-            <DashboardContextProvider>
-                <DashboardApiProvider>
-                    <DashboardCore
-                        width="100%"
-                        height="100%"
-                        preset={customPreset}
-                        definition={definition}
-                        actionMenus={[<RefreshButton key="refresh" />]}
-                    />
-                </DashboardApiProvider>
-            </DashboardContextProvider>
-        </SplunkThemeProvider>
+        <>
+            <style>{customStyle}</style>
+            <SplunkThemeProvider {...themeToVariant.prisma}>
+                <DashboardContextProvider>
+                    <DashboardApiProvider>
+                        <DashboardCore
+                            width="100%"
+                            height="100%"
+                            preset={customPreset}
+                            definition={definition}
+                            actionMenus={[<RefreshButton key="refresh" />]}
+                        />
+                    </DashboardApiProvider>
+                </DashboardContextProvider>
+            </SplunkThemeProvider>
+        </>
     );
 };
 
