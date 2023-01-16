@@ -7,6 +7,7 @@ import Table from '@splunk/visualizations/Table';
 
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
 
+import styled from 'styled-components';
 import KVStoreUploader from './components/KVStoreUploader';
 import { useDashboardApi } from './DashboardApiContext';
 import { getAllKVEntries, updateKVEntry } from './data';
@@ -16,6 +17,13 @@ import { downloadFile } from './utils/file';
 import { getTableMetaData } from './utils/table';
 
 const COLLECTION_NAME = 'example_kv';
+
+const TableButtonActionGroup = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+`;
 
 const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
     const { api } = useDashboardApi();
@@ -107,6 +115,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
 
         try {
             const data = await getAllKVEntries(COLLECTION_NAME, defaultErrorMsg);
+            console.log('data',data);
             if (data == null || data.length === 0) {
                 throw new Error(emptyErrorMsg);
             }
@@ -115,6 +124,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
             const csvRawData = formatCSVData(data, omitColumns);
             downloadFile(csvRawData, 'text/csv', COLLECTION_NAME);
         } catch (err) {
+            console.error(err);
             setInfoMessage({
                 visible: true,
                 type: 'error',
@@ -187,12 +197,12 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
                 onCellClick={handleCellClick}
                 onRequestParamsChange={onRequestParamsChange}
             />
-            <div style={{ position: 'absolute', bottom: 0, left: 0, display: 'flex' }}>
+            <TableButtonActionGroup>
                 <Button disabled={downloading} onClick={handleDownloadAsCSV}>
                     Download as CSV
                 </Button>
                 <Button onClick={onOpenUploadModal}>Upload CSV</Button>
-            </div>
+            </TableButtonActionGroup>
         </div>
     );
 };
