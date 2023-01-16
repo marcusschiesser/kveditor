@@ -1,13 +1,9 @@
 import * as config from '@splunk/splunk-utils/config';
-import { createRESTURL } from '@splunk/splunk-utils/url';
-import { handleError, handleResponse } from '@splunk/splunk-utils/fetch';
+import { customFetch } from './utils/api';
 
-function updateKVEntry(collection, key, data, defaultErrorMsg) {
-    const url = createRESTURL(`storage/collections/data/${collection}/${encodeURIComponent(key)}`, {
-        app: config.app,
-        sharing: 'app',
-    });
-    return fetch(url, {
+async function updateKVEntry(collection, key, data, defaultErrorMsg) {
+    const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
+    const requestInit = {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -16,55 +12,53 @@ function updateKVEntry(collection, key, data, defaultErrorMsg) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-    })
-        .then(handleResponse(200))
-        .catch(handleError(defaultErrorMsg))
-        .catch((err) => (err instanceof Object ? defaultErrorMsg : err)); // handleError sometimes returns an Object
+    };
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
-function getAllKVEntries(collection, defaultErrorMsg) {
-    const url = createRESTURL(`storage/collections/data/${collection}`, {
-        app: config.app,
-        sharing: 'app',
-    });
-    return fetch(url, {
+async function getAllKVEntries(collection, defaultErrorMsg) {
+    const path = `storage/collections/data/${collection}`;
+    const requestInit = {
         method: 'GET',
         credentials: 'include',
         headers: {
             'X-Splunk-Form-Key': config.CSRFToken,
             'X-Requested-With': 'XMLHttpRequest',
         },
-    })
-        .then(handleResponse(200))
-        .catch(handleError(defaultErrorMsg))
-        .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
+    };
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
-function deleteAllKVEntries(collection, defaultErrorMsg) {
-    const url = createRESTURL(`storage/collections/data/${collection}`, {
-        app: config.app,
-        sharing: 'app',
-    });
-    return fetch(url, {
+async function deleteAllKVEntries(collection, defaultErrorMsg) {
+    const path = `storage/collections/data/${collection}`;
+    const requestInit = {
         method: 'DELETE',
         credentials: 'include',
         headers: {
             'X-Splunk-Form-Key': config.CSRFToken,
             'X-Requested-With': 'XMLHttpRequest',
         },
-    })
-        .then(handleResponse(204))
-        .catch(handleError(defaultErrorMsg))
-        .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
+    };
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    return null;
 }
 
-function batchInsertKVEntries(collection, data, defaultErrorMsg) {
-    const url = createRESTURL(`storage/collections/data/${collection}/batch_save`, {
-        app: config.app,
-        sharing: 'app',
-    });
-
-    return fetch(url, {
+async function batchInsertKVEntries(collection, data, defaultErrorMsg) {
+    const path = `storage/collections/data/${collection}/batch_save`;
+    const requestInit = {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -73,10 +67,13 @@ function batchInsertKVEntries(collection, data, defaultErrorMsg) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-    })
-        .then(handleResponse(201))
-        .catch(handleError(defaultErrorMsg))
-        .catch((err) => (err instanceof Object ? defaultErrorMsg : err));
+    };
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
 export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
