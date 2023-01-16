@@ -1,7 +1,7 @@
 import * as config from '@splunk/splunk-utils/config';
 import { customFetch } from './utils/api';
 
-function updateKVEntry(collection, key, data, defaultErrorMsg) {
+async function updateKVEntry(collection, key, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
     const requestInit = {
         method: 'POST',
@@ -13,10 +13,15 @@ function updateKVEntry(collection, key, data, defaultErrorMsg) {
         },
         body: JSON.stringify(data),
     };
-    return customFetch(path, requestInit, defaultErrorMsg, 200);
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
-function getAllKVEntries(collection, defaultErrorMsg) {
+async function getAllKVEntries(collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'GET',
@@ -26,10 +31,15 @@ function getAllKVEntries(collection, defaultErrorMsg) {
             'X-Requested-With': 'XMLHttpRequest',
         },
     };
-    return customFetch(path, requestInit, defaultErrorMsg, 200);
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
-function deleteAllKVEntries(collection, defaultErrorMsg) {
+async function deleteAllKVEntries(collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'DELETE',
@@ -39,10 +49,14 @@ function deleteAllKVEntries(collection, defaultErrorMsg) {
             'X-Requested-With': 'XMLHttpRequest',
         },
     };
-    return customFetch(path, requestInit, defaultErrorMsg, 204);
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    return null;
 }
 
-function batchInsertKVEntries(collection, data, defaultErrorMsg) {
+async function batchInsertKVEntries(collection, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/batch_save`;
     const requestInit = {
         method: 'POST',
@@ -54,7 +68,12 @@ function batchInsertKVEntries(collection, data, defaultErrorMsg) {
         },
         body: JSON.stringify(data),
     };
-    return customFetch(path, requestInit, defaultErrorMsg, 201);
+    const response = await customFetch(path, requestInit);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    const responseData = await response.json();
+    return responseData;
 }
 
 export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
