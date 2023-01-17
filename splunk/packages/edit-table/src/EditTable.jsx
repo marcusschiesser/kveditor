@@ -16,8 +16,6 @@ import { formatCSVData } from './utils/csv';
 import { downloadFile } from './utils/file';
 import { getTableMetaData } from './utils/table';
 
-const COLLECTION_NAME = 'example_collection';
-
 const TableButtonActionGroup = styled.div`
     position: absolute;
     bottom: 0;
@@ -25,7 +23,9 @@ const TableButtonActionGroup = styled.div`
     display: flex;
 `;
 
-const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) => {
+const EditTable = (props) => {
+    const { id, dataSources, onRequestParamsChange, width, height, options } = props;
+    const collectionName = options.collection;
     const { api } = useDashboardApi();
 
     const style = useMemo(
@@ -64,7 +64,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         setOpenModal(false);
         setInfoMessage({ visible: true, message: 'Updating...' });
         const defaultErrorMsg = 'Error updating row. Please try again.';
-        updateKVEntry(COLLECTION_NAME, row._key, row, defaultErrorMsg)
+        updateKVEntry(collectionName, row._key, row, defaultErrorMsg)
             .then(() => {
                 setInfoMessage({
                     visible: true,
@@ -114,17 +114,15 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
         const emptyErrorMsg = 'No data to download.';
 
         try {
-            const data = await getAllKVEntries(COLLECTION_NAME, defaultErrorMsg);
-            console.log('data',data);
+            const data = await getAllKVEntries(collectionName, defaultErrorMsg);
             if (data == null || data.length === 0) {
                 throw new Error(emptyErrorMsg);
             }
 
             const omitColumns = ['_user'];
             const csvRawData = formatCSVData(data, omitColumns);
-            downloadFile(csvRawData, 'text/csv', COLLECTION_NAME);
+            downloadFile(csvRawData, 'text/csv', collectionName);
         } catch (err) {
-            console.error(err);
             setInfoMessage({
                 visible: true,
                 type: 'error',
@@ -175,7 +173,7 @@ const EditTable = ({ id, dataSources, onRequestParamsChange, width, height }) =>
             <KVStoreUploader
                 uploadModalOpen={uploadModalOpen}
                 setUploadModalOpen={setUploadModalOpen}
-                collectionName={COLLECTION_NAME}
+                collectionName={collectionName}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
                 refreshVisualization={refreshVisualization}
