@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '@splunk/react-ui/Button';
-import Football from './models/football';
 import DataFields from './components/DataFields';
 
 const RowFormKeyStyle = {
@@ -15,7 +14,7 @@ const RowFormListStyle = {
     height: '500px',
 };
 
-const RowForm = ({ onSave, data }) => {
+const RowForm = ({ onSave, data, model }) => {
     const [currentData, setCurrentData] = useState(data);
 
     const handleChange = (_, { value, name }) => {
@@ -35,7 +34,7 @@ const RowForm = ({ onSave, data }) => {
                 <span style={RowFormValueStyle}>Value</span>
             </div>
             <div style={RowFormListStyle}>
-                <DataFields data={currentData} handleChange={handleChange} RowModel={Football} />
+                <DataFields data={currentData} handleChange={handleChange} model={model} />
             </div>
             <div>
                 <Button label="Save" appearance="primary" onClick={handleSave} />
@@ -47,6 +46,7 @@ const RowForm = ({ onSave, data }) => {
 RowForm.propTypes = {
     onSave: PropTypes.func,
     data: PropTypes.object,
+    model: PropTypes.object,
 };
 
 export default RowForm;

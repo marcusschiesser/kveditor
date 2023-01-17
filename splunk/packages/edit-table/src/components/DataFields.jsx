@@ -6,16 +6,15 @@ import Text from '@splunk/react-ui/Text';
 import PropTypes from 'prop-types';
 import React, { useCallback } from 'react';
 
-const DataFields = ({ data, handleChange, RowModel }) => {
+const DataFields = ({ data, handleChange, model }) => {
     const renderInputField = useCallback(
         (key) => {
-            const dataDefinition = RowModel[key];
-            if (!dataDefinition) {
+            const fieldDefinition = model[key];
+            if (!fieldDefinition) {
                 return null;
             }
 
-            const { type, props } = dataDefinition;
-
+            const { type, props } = fieldDefinition;
             switch (type) {
                 case 'string': {
                     return (
@@ -63,7 +62,7 @@ const DataFields = ({ data, handleChange, RowModel }) => {
                 }
 
                 case 'enum': {
-                    const { options } = dataDefinition;
+                    const { options } = fieldDefinition;
                     return (
                         <ControlGroup label={key} key={`group_${key}`}>
                             <Select
@@ -72,7 +71,7 @@ const DataFields = ({ data, handleChange, RowModel }) => {
                                 value={data[key]}
                                 onChange={handleChange}
                             >
-                                {Object.values(options).map((option) => (
+                                {options.map((option) => (
                                     <Select.Option
                                         key={`option_${option}`}
                                         value={option}
@@ -88,7 +87,7 @@ const DataFields = ({ data, handleChange, RowModel }) => {
                     return null;
             }
         },
-        [data, handleChange, RowModel]
+        [data, handleChange, model]
     );
 
     return Object.keys(data).map((key) => renderInputField(key));
@@ -97,7 +96,7 @@ const DataFields = ({ data, handleChange, RowModel }) => {
 DataFields.propTypes = {
     data: PropTypes.object,
     handleChange: PropTypes.func,
-    RowModel: PropTypes.object,
+    model: PropTypes.object,
 };
 
 export default DataFields;
