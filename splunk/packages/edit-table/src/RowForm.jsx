@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import ControlGroup from '@splunk/react-ui/ControlGroup';
-import Text from '@splunk/react-ui/Text';
 import PropTypes from 'prop-types';
 import Button from '@splunk/react-ui/Button';
+import Football from './models/football';
+import DataFields from './components/DataFields';
 
 const RowFormKeyStyle = {
     display: 'inline-block',
@@ -35,18 +35,7 @@ const RowForm = ({ onSave, data }) => {
                 <span style={RowFormValueStyle}>Value</span>
             </div>
             <div style={RowFormListStyle}>
-                {Object.keys(data).map((key) => (
-                    <ControlGroup label={key} key={`group_${key}`}>
-                        <Text
-                            canClear
-                            placeholder="value"
-                            key={`text_${key}`}
-                            name={key}
-                            value={currentData[key].toString()}
-                            onChange={handleChange}
-                        />
-                    </ControlGroup>
-                ))}
+                <DataFields data={currentData} handleChange={handleChange} RowModel={Football} />
             </div>
             <div>
                 <Button label="Save" appearance="primary" onClick={handleSave} />
