@@ -22,7 +22,28 @@
         "lineStrokeWidth": 4,
         "lineLength": 10,
         "width": 240,
-        "collection": "example_collection"
+        "collection": "example_collection",
+        "model": {
+          "Score": {
+            "type": "number",
+            "props": {
+              "min": 0,
+              "max": 1000
+            }
+          },
+          "Title": {
+            "type": "enum",
+            "options": ["Something 1", "Something 2", "Something 3"],
+            "props": {}
+          },
+          "Year": {
+            "type": "number",
+            "props": {
+              "min": 1900,
+              "max": 2100
+            }
+          }
+        }
       },
       "dataSources": {
         "primary": "ds_search_1"

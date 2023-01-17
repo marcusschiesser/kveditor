@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import ControlGroup from '@splunk/react-ui/ControlGroup';
-import Text from '@splunk/react-ui/Text';
 import PropTypes from 'prop-types';
 import Button from '@splunk/react-ui/Button';
+import DataFields from './components/DataFields';
 
 const RowFormKeyStyle = {
     display: 'inline-block',
@@ -15,7 +14,7 @@ const RowFormListStyle = {
     height: '500px',
 };
 
-const RowForm = ({ onSave, data }) => {
+const RowForm = ({ onSave, data, model }) => {
     const [currentData, setCurrentData] = useState(data);
 
     const handleChange = (_, { value, name }) => {
@@ -35,18 +34,7 @@ const RowForm = ({ onSave, data }) => {
                 <span style={RowFormValueStyle}>Value</span>
             </div>
             <div style={RowFormListStyle}>
-                {Object.keys(data).map((key) => (
-                    <ControlGroup label={key} key={`group_${key}`}>
-                        <Text
-                            canClear
-                            placeholder="value"
-                            key={`text_${key}`}
-                            name={key}
-                            value={currentData[key].toString()}
-                            onChange={handleChange}
-                        />
-                    </ControlGroup>
-                ))}
+                <DataFields data={currentData} handleChange={handleChange} model={model} />
             </div>
             <div>
                 <Button label="Save" appearance="primary" onClick={handleSave} />
@@ -58,6 +46,7 @@ const RowForm = ({ onSave, data }) => {
 RowForm.propTypes = {
     onSave: PropTypes.func,
     data: PropTypes.object,
+    model: PropTypes.object,
 };
 
 export default RowForm;

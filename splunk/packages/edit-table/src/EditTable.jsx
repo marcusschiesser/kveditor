@@ -25,7 +25,7 @@ const TableButtonActionGroup = styled.div`
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const collectionName = options.collection;
+    const { collection: collectionName, model } = options;
     const { api } = useDashboardApi();
 
     const style = useMemo(
@@ -169,6 +169,7 @@ const EditTable = (props) => {
                 data={rowData}
                 onClose={handleOnClose}
                 onSave={handleOnSave}
+                model={model}
             />
             <KVStoreUploader
                 uploadModalOpen={uploadModalOpen}
