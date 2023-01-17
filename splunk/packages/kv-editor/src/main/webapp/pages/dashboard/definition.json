@@ -24,25 +24,23 @@
         "width": 240,
         "collection": "example_collection",
         "model": {
-          "football": {
-            "Score": {
-              "type": "number",
-              "props": {
-                "min": 0,
-                "max": 1000
-              }
-            },
-            "Title": {
-              "type": "enum",
-              "options": ["Something 1", "Something 2", "Something 3"],
-              "props": {}
-            },
-            "Year": {
-              "type": "number",
-              "props": {
-                "min": 1900,
-                "max": 2100
-              }
+          "Score": {
+            "type": "number",
+            "props": {
+              "min": 0,
+              "max": 1000
+            }
+          },
+          "Title": {
+            "type": "enum",
+            "options": ["Something 1", "Something 2", "Something 3"],
+            "props": {}
+          },
+          "Year": {
+            "type": "number",
+            "props": {
+              "min": 1900,
+              "max": 2100
             }
           }
         }

@@ -169,7 +169,7 @@ const EditTable = (props) => {
                 data={rowData}
                 onClose={handleOnClose}
                 onSave={handleOnSave}
-                model={model.football}
+                model={model}
             />
             <KVStoreUploader
                 uploadModalOpen={uploadModalOpen}
