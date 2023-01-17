@@ -21,7 +21,8 @@
         "lineColor": "#6cb8ca",
         "lineStrokeWidth": 4,
         "lineLength": 10,
-        "width": 240
+        "width": 240,
+        "collection": "example_collection"
       },
       "dataSources": {
         "primary": "ds_search_1"

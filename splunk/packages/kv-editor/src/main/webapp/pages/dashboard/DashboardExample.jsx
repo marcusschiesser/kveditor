@@ -8,6 +8,17 @@ import { EditTable, RefreshButton, DashboardApiProvider } from '@splunk/edit-tab
 
 import definition from './definition.json';
 
+function withCollectionName(Component) {
+    const newComponent = function WrappedComponent(props) {
+        const collectionName = definition.visualizations.viz_editTable.options.collection;
+        return <Component {...props} collectionName={collectionName} />;
+    };
+    newComponent.config = Component.config;
+    newComponent.propTypes = Component.propTypes;
+    newComponent.defaultProps = Component.defaultProps;
+    return newComponent;
+}
+
 const themeToVariant = {
     enterprise: { colorScheme: 'light', family: 'enterprise' },
     enterpriseDark: { colorScheme: 'dark', family: 'enterprise' },
@@ -19,7 +30,7 @@ const customPreset = {
     ...EnterpriseViewOnlyPreset,
     visualizations: {
         ...EnterpriseViewOnlyPreset.visualizations,
-        'splunk.EditTable': EditTable,
+        'splunk.EditTable': withCollectionName(EditTable),
     },
 };
 
