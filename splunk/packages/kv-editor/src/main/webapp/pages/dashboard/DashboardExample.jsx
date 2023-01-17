@@ -8,13 +8,15 @@ import { EditTable, RefreshButton, DashboardApiProvider } from '@splunk/edit-tab
 
 import definition from './definition.json';
 
-const collectionName = definition.inputs.default_collection_name.options.defaultValue;
-console.log('definition', collectionName);
-
 function withCollectionName(Component) {
-    return function WrappedComponent(props) {
+    const newComponent = function WrappedComponent(props) {
+        const collectionName = definition.inputs.default_collection_name.options.defaultValue;
         return <Component {...props} collectionName={collectionName} />;
     };
+    newComponent.config = Component.config;
+    newComponent.propTypes = Component.propTypes;
+    newComponent.defaultProps = Component.defaultProps;
+    return newComponent;
 }
 
 const themeToVariant = {
