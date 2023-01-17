@@ -16,8 +16,6 @@ import { formatCSVData } from './utils/csv';
 import { downloadFile } from './utils/file';
 import { getTableMetaData } from './utils/table';
 
-const DEFAULT_COLLECTION_NAME = 'example_collection';
-
 const TableButtonActionGroup = styled.div`
     position: absolute;
     bottom: 0;
@@ -25,14 +23,9 @@ const TableButtonActionGroup = styled.div`
     display: flex;
 `;
 
-const EditTable = ({
-    id,
-    dataSources,
-    onRequestParamsChange,
-    width,
-    height,
-    collectionName = DEFAULT_COLLECTION_NAME,
-}) => {
+const EditTable = (props) => {
+    const { id, dataSources, onRequestParamsChange, width, height, options } = props;
+    const collectionName = options.collection;
     const { api } = useDashboardApi();
 
     const style = useMemo(
