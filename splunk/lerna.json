@@ -2,7 +2,7 @@
   "lerna": "2.0.0",
   "command": {
     "publish": {
-      "ignore": ["*.md"]
+      "ignoreChanges": ["*.md"]
     }
   },
   "npmClient": "yarn",
