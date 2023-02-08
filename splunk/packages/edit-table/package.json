@@ -1,5 +1,5 @@
 {
-  "name": "@splunk/edit-table",
+  "name": "@marcusschiesser/edit-table",
   "version": "0.0.1",
   "license": "UNLICENSED",
   "scripts": {
@@ -65,5 +65,12 @@
   },
   "engines": {
     "node": ">=6"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@marcusschiesser"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcusschiesser/my-splunk-repo.git"
   }
 }
