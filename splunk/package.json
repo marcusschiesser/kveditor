@@ -1,5 +1,5 @@
 {
-  "name": "@splunk/kveditor",
+  "name": "kv-editor-project",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
