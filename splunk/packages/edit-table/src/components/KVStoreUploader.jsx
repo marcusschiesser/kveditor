@@ -10,7 +10,7 @@ import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
 import AbstractModal from './AbstractModal';
 import SingleFileUpload from './SingleFileUpload';
 
-// TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
+// TODO(marcusschiesser): Research about limit size of CSV file to batch upload to KV store
 const FILE_SIZE_LIMIT_GB = 1;
 const FILE_SIZE_LIMIT_BYTE = FILE_SIZE_LIMIT_GB * 1024 * 1024 * 1024;
 
@@ -21,7 +21,7 @@ const ModalButtonActionGroup = styled.div`
     margin-top: 2rem;
 `;
 
-// TODO(thucpn): So many props here, in the feature, we can consider create EditTable context to pass down props
+// TODO(marcusschiesser): So many props here, in the feature, we can consider create EditTable context to pass down props
 export default function KVStoreUploader({
     uploadModalOpen,
     setUploadModalOpen,
