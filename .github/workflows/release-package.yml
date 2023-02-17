@@ -26,6 +26,6 @@ jobs:
         with:
           node-version: 16
           registry-url: https://npm.pkg.github.com/
-      - run: cd splunk/packages/edit-table && npm publish
+      - run: cd splunk/packages/edit-table && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
