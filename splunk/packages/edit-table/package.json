@@ -1,6 +1,6 @@
 {
   "name": "@marcusschiesser/edit-table",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "license": "UNLICENSED",
   "scripts": {
     "build": "NODE_ENV=production webpack --bail",
@@ -67,7 +67,7 @@
     "node": ">=6"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/@marcusschiesser"
+    "@marcusschiesser:registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",
