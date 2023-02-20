@@ -1,7 +1,7 @@
 {
   "name": "@marcusschiesser/edit-table",
-  "version": "1.0.6",
-  "license": "UNLICENSED",
+  "version": "1.1.0",
+  "license": "MIT",
   "scripts": {
     "build": "NODE_ENV=production webpack --bail",
     "eslint": "eslint src --ext \".js,.jsx\"",
@@ -18,7 +18,7 @@
     "test:ci": "JEST_JUNIT_OUTPUT_DIR=./test-reports JEST_JUNIT_OUTPUT_NAME=unit-results.xml JEST_JUNIT_CLASSNAME=unit yarn run test --ci --reporters=default jest-junit --coverage --coverageDirectory=coverage_report/coverage_maps_unit --coverageReporters=json",
     "test:watch": "jest --watch"
   },
-  "main": "src/index.js",
+  "main": "index.js",
   "dependencies": {
     "@splunk/dashboard-action-buttons": "^23.4.0",
     "@splunk/react-ui": "^4.4.0",
