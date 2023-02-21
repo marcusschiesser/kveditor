@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     volumes:
-      - ./splunk/packages/kv-editor/stage:/opt/splunk/etc/apps/kv-editor
+      - ${LOCAL_WORKSPACE_FOLDER:-./}/splunk/packages/kv-editor/stage:/opt/splunk/etc/apps/kv-editor
     env_file:
       - splunk.env
     ports:
