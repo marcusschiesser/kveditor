@@ -173,7 +173,7 @@ const EditTable = (props) => {
     }
 
     const fields = tableMetadata.dataFields;
-    const headers = fields.map((key) => model[key].label || key);
+    const headers = fields.map((key) => model[key]?.label || key);
 
     return (
         <div style={style}>
