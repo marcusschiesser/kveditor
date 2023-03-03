@@ -1,6 +1,6 @@
 {
   "name": "@marcusschiesser/edit-table",
-  "version": "1.2.0",
+  "version": "1.2.3",
   "license": "MIT",
   "scripts": {
     "build": "NODE_ENV=production webpack --bail",
