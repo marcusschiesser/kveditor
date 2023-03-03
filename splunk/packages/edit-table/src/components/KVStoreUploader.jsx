@@ -26,6 +26,7 @@ export default function KVStoreUploader({
     uploadModalOpen,
     setUploadModalOpen,
     collectionName,
+    splunkApp,
     tableMetadata,
     setInfoMessage,
     refreshVisualization,
@@ -68,8 +69,8 @@ export default function KVStoreUploader({
 
             const formattedJsonData = projectFields(jsonData, dataFields);
 
-            await deleteAllKVEntries(collectionName, deleteErrorMsg);
-            await batchInsertKVEntries(collectionName, formattedJsonData, uploadErrorMsg);
+            await deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp);
+            await batchInsertKVEntries(collectionName, formattedJsonData, uploadErrorMsg, splunkApp);
 
             setInfoMessage({
                 visible: true,
@@ -124,6 +125,7 @@ KVStoreUploader.propTypes = {
     uploadModalOpen: PropTypes.bool.isRequired,
     setUploadModalOpen: PropTypes.func.isRequired,
     collectionName: PropTypes.string.isRequired,
+    splunkApp: PropTypes.string,
     setInfoMessage: PropTypes.func.isRequired,
     refreshVisualization: PropTypes.func.isRequired,
     tableMetadata: PropTypes.shape({

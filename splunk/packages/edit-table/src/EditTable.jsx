@@ -25,7 +25,7 @@ const TableButtonActionGroup = styled.div`
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { collection: collectionName, model } = options;
+    const { splunkApp, collection: collectionName, model, labelMap } = options;
     const { api } = useDashboardApi();
 
     const style = useMemo(
@@ -64,7 +64,7 @@ const EditTable = (props) => {
         setOpenModal(false);
         setInfoMessage({ visible: true, message: 'Updating...' });
         const defaultErrorMsg = 'Error updating row. Please try again.';
-        updateKVEntry(collectionName, row._key, row, defaultErrorMsg)
+        updateKVEntry(collectionName, row._key, row, defaultErrorMsg, splunkApp)
             .then(() => {
                 setInfoMessage({
                     visible: true,
@@ -82,7 +82,7 @@ const EditTable = (props) => {
                 setInfoMessage({
                     visible: true,
                     type: 'error',
-                    message: err,
+                    message: err.message,
                 });
             });
     };
@@ -104,8 +104,23 @@ const EditTable = (props) => {
             }
             return row;
         }
+
+        // when a cell is clicked, the data we get is the label of table header, not the key
+        // e.g: if the header label is "Possible Causes", the row data will be {"Possible Causes": "placeholder"}
+        // but the expectation is {"possible_causes": "placeholder"}
+        // So, we need this function to convert the label to key in row data in order to
+        // handle it correctly in edit modal and other places
+        function convertLabelObjectToKey(obj) {
+            const newObj = {};
+            Object.keys(obj).forEach((label) => {
+                const key = labelMap.find((m) => m.label === label)?.key || label;
+                newObj[key] = obj[label];
+            });
+            return newObj;
+        }
+
         // extract row from payload and call click handler
-        handleEditActionClick(undefined, extractRow(e.payload));
+        handleEditActionClick(undefined, convertLabelObjectToKey(extractRow(e.payload)));
     };
 
     const handleDownloadAsCSV = async () => {
@@ -114,7 +129,7 @@ const EditTable = (props) => {
         const emptyErrorMsg = 'No data to download.';
 
         try {
-            const data = await getAllKVEntries(collectionName, defaultErrorMsg);
+            const data = await getAllKVEntries(collectionName, defaultErrorMsg, splunkApp);
             if (data == null || data.length === 0) {
                 throw new Error(emptyErrorMsg);
             }
@@ -146,6 +161,9 @@ const EditTable = (props) => {
         );
     }
 
+    const fields = tableMetadata.dataFields;
+    const headers = fields.map((key) => labelMap.find(m => m.key === key)?.label || key);
+
     return (
         <div style={style}>
             {infoMessage.visible && (
@@ -170,16 +188,18 @@ const EditTable = (props) => {
                 onClose={handleOnClose}
                 onSave={handleOnSave}
                 model={model}
+                labelMap={labelMap}
             />
             <KVStoreUploader
                 uploadModalOpen={uploadModalOpen}
                 setUploadModalOpen={setUploadModalOpen}
                 collectionName={collectionName}
+                splunkApp={splunkApp}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
                 refreshVisualization={refreshVisualization}
             />
-            {/* 
+            {/*
                 Use ReadOnlyTable if you want to add action buttons for each row
                 But currently, it doesn't support pagination and sorting
                 import ReadOnlyTable from './ReadOnlyTable';
@@ -187,9 +207,12 @@ const EditTable = (props) => {
                     dataSources={dataSources}
                     onEditActionClick={handleEditActionClick}
                     onRequestParamsChange={onRequestParamsChange}
-                /> 
+                />
             */}
             <Table
+                options={{
+                    headers,
+                }}
                 width={width}
                 height={height}
                 dataSources={dataSources}

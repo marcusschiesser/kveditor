@@ -14,7 +14,7 @@ const RowFormListStyle = {
     height: '500px',
 };
 
-const RowForm = ({ onSave, data, model }) => {
+const RowForm = ({ onSave, data, model, labelMap }) => {
     const [currentData, setCurrentData] = useState(data);
 
     const handleChange = (_, { value, name }) => {
@@ -34,7 +34,7 @@ const RowForm = ({ onSave, data, model }) => {
                 <span style={RowFormValueStyle}>Value</span>
             </div>
             <div style={RowFormListStyle}>
-                <DataFields data={currentData} handleChange={handleChange} model={model} />
+                <DataFields data={currentData} handleChange={handleChange} model={model} labelMap={labelMap} />
             </div>
             <div>
                 <Button label="Save" appearance="primary" onClick={handleSave} />
@@ -47,6 +47,7 @@ RowForm.propTypes = {
     onSave: PropTypes.func,
     data: PropTypes.object,
     model: PropTypes.object,
+    labelMap: PropTypes.array
 };
 
 export default RowForm;
