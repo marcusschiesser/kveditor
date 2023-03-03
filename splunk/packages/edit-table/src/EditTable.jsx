@@ -124,7 +124,7 @@ const EditTable = (props) => {
         function convertLabelObjectToKey(obj) {
             const newObj = {};
             Object.keys(obj).forEach((label) => {
-                const key = labelMap[label];
+                const key = labelMap[label] || label;
                 newObj[key] = obj[label];
             });
             return newObj;
