@@ -23,22 +23,9 @@
         "lineLength": 10,
         "width": 240,
         "collection": "example_collection",
-        "labelMap": [
-          {
-            "key": "Score",
-            "label": "ScoreInput"
-          },
-          {
-            "key": "Title",
-            "label": "TitleInput"
-          },
-          {
-            "key": "Year",
-            "label": "YearInput"
-          }
-        ],
         "model": {
           "Score": {
+            "label": "ScoreInput",
             "order": 1,
             "type": "number",
             "props": {
@@ -47,12 +34,14 @@
             }
           },
           "Title": {
+            "label": "TitleInput",
             "order": 2,
             "type": "enum",
             "options": ["Something 1", "Something 2", "Something 3"],
             "props": {}
           },
           "Year": {
+            "label": "YearInput",
             "order": 3,
             "type": "number",
             "props": {

@@ -13,12 +13,12 @@ const ModalBodyStyle = {
     padding: 24,
 };
 
-const ModalComponent = ({ onClose, onSave, data, open, model, labelMap }) => {
+const ModalComponent = ({ onClose, onSave, data, open, model }) => {
     return (
         <Modal onRequestClose={onClose} open={open} style={ModalStyle}>
             <Modal.Header title={`Edit ${data._key} entry`} onRequestClose={onClose} />
             <Modal.Body style={ModalBodyStyle}>
-                <RowForm data={data} onSave={onSave} model={model} labelMap={labelMap} />
+                <RowForm data={data} onSave={onSave} model={model} />
             </Modal.Body>
         </Modal>
     );
@@ -30,7 +30,6 @@ ModalComponent.propTypes = {
     data: T.object,
     open: T.bool,
     model: T.object,
-    labelMap: T.array
 };
 
 export default ModalComponent;

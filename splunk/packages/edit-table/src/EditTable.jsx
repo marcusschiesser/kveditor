@@ -23,10 +23,20 @@ const TableButtonActionGroup = styled.div`
     display: flex;
 `;
 
+const constructLabelMap = (model) => {
+    const labelMap = {};
+    Object.keys(model).map((key) => {
+        const label = model[key].label || key;
+        labelMap[label] = key;
+    });
+    return labelMap;
+}
+
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { splunkApp, collection: collectionName, model, labelMap } = options;
+    const { splunkApp, collection: collectionName, model } = options;
     const { api } = useDashboardApi();
+    const label2key = constructLabelMap(model);
 
     const style = useMemo(
         () => ({
@@ -113,7 +123,7 @@ const EditTable = (props) => {
         function convertLabelObjectToKey(obj) {
             const newObj = {};
             Object.keys(obj).forEach((label) => {
-                const key = labelMap.find((m) => m.label === label)?.key || label;
+                const key = label2key[label] || label;
                 newObj[key] = obj[label];
             });
             return newObj;
@@ -162,7 +172,7 @@ const EditTable = (props) => {
     }
 
     const fields = tableMetadata.dataFields;
-    const headers = fields.map((key) => labelMap.find(m => m.key === key)?.label || key);
+    const headers = fields.map((key) => model[key]?.label || key);
 
     return (
         <div style={style}>
@@ -188,7 +198,6 @@ const EditTable = (props) => {
                 onClose={handleOnClose}
                 onSave={handleOnSave}
                 model={model}
-                labelMap={labelMap}
             />
             <KVStoreUploader
                 uploadModalOpen={uploadModalOpen}
