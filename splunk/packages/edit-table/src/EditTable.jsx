@@ -36,8 +36,7 @@ const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
     const { splunkApp, collection: collectionName, model } = options;
     const { api } = useDashboardApi();
-    const labelMap = constructLabelMap(model);
-    console.log('labelMap', labelMap);
+    const label2key = constructLabelMap(model);
 
     const style = useMemo(
         () => ({
@@ -124,7 +123,7 @@ const EditTable = (props) => {
         function convertLabelObjectToKey(obj) {
             const newObj = {};
             Object.keys(obj).forEach((label) => {
-                const key = labelMap[label] || label;
+                const key = label2key[label] || label;
                 newObj[key] = obj[label];
             });
             return newObj;
