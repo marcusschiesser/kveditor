@@ -25,8 +25,18 @@ const TableButtonActionGroup = styled.div`
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { splunkApp, collection: collectionName, model, labelMap } = options;
+    const { splunkApp, collection: collectionName, model } = options;
     const { api } = useDashboardApi();
+
+    const labelMap = Object.keys(model).map((key) => {
+        const label = model[key].label || key;
+        return {
+            key,
+            label,
+        };
+    });
+
+    console.log(labelMap);
 
     const style = useMemo(
         () => ({
