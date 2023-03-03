@@ -1,7 +1,7 @@
 import * as config from '@splunk/splunk-utils/config';
 import { customFetch } from './utils/api';
 
-async function updateKVEntry(collection, key, data, defaultErrorMsg) {
+async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp = config.app) {
     const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
     const requestInit = {
         method: 'POST',
@@ -13,7 +13,7 @@ async function updateKVEntry(collection, key, data, defaultErrorMsg) {
         },
         body: JSON.stringify(data),
     };
-    const response = await customFetch(path, requestInit);
+    const response = await customFetch(path, requestInit, splunkApp);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }
@@ -21,7 +21,7 @@ async function updateKVEntry(collection, key, data, defaultErrorMsg) {
     return responseData;
 }
 
-async function getAllKVEntries(collection, defaultErrorMsg) {
+async function getAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'GET',
@@ -31,7 +31,7 @@ async function getAllKVEntries(collection, defaultErrorMsg) {
             'X-Requested-With': 'XMLHttpRequest',
         },
     };
-    const response = await customFetch(path, requestInit);
+    const response = await customFetch(path, requestInit, splunkApp);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }
@@ -39,7 +39,7 @@ async function getAllKVEntries(collection, defaultErrorMsg) {
     return responseData;
 }
 
-async function deleteAllKVEntries(collection, defaultErrorMsg) {
+async function deleteAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'DELETE',
@@ -49,14 +49,14 @@ async function deleteAllKVEntries(collection, defaultErrorMsg) {
             'X-Requested-With': 'XMLHttpRequest',
         },
     };
-    const response = await customFetch(path, requestInit);
+    const response = await customFetch(path, requestInit, splunkApp);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }
     return null;
 }
 
-async function batchInsertKVEntries(collection, data, defaultErrorMsg) {
+async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp = config.app) {
     const path = `storage/collections/data/${collection}/batch_save`;
     const requestInit = {
         method: 'POST',
@@ -68,7 +68,7 @@ async function batchInsertKVEntries(collection, data, defaultErrorMsg) {
         },
         body: JSON.stringify(data),
     };
-    const response = await customFetch(path, requestInit);
+    const response = await customFetch(path, requestInit, splunkApp);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }

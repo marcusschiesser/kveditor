@@ -6,10 +6,7 @@ export const getTableMetaData = (dataSources) => {
         return null;
     }
 
-    const idColumnKey = '_key';
-    const dataFields = data.fields
-        .map((field) => field.name)
-        .filter((name) => name !== idColumnKey);
+    const dataFields = data.fields.map((field) => field.name);
     const totalItems = meta.resultCount;
 
     return {
