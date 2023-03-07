@@ -25,7 +25,7 @@ const TableButtonActionGroup = styled.div`
 
 const constructLabelMap = (model) => {
     const labelMap = {};
-    Object.keys(model).map((key) => {
+    Object.keys(model).forEach((key) => {
         const label = model[key].label || key;
         labelMap[label] = key;
     });
@@ -133,31 +133,6 @@ const EditTable = (props) => {
         handleEditActionClick(undefined, convertLabelObjectToKey(extractRow(e.payload)));
     };
 
-    const handleDownloadAsCSV = async () => {
-        setDownloading(true);
-        const defaultErrorMsg = 'Error downloading csv. Please try again.';
-        const emptyErrorMsg = 'No data to download.';
-
-        try {
-            const data = await getAllKVEntries(collectionName, defaultErrorMsg, splunkApp);
-            if (data == null || data.length === 0) {
-                throw new Error(emptyErrorMsg);
-            }
-
-            const omitColumns = ['_user'];
-            const csvRawData = formatCSVData(data, omitColumns);
-            downloadFile(csvRawData, 'text/csv', collectionName);
-        } catch (err) {
-            setInfoMessage({
-                visible: true,
-                type: 'error',
-                message: err.message,
-            });
-        }
-
-        setDownloading(false);
-    };
-
     const onOpenUploadModal = () => setUploadModalOpen(true);
 
     const tableMetadata = getTableMetaData(dataSources);
@@ -173,6 +148,29 @@ const EditTable = (props) => {
 
     const fields = tableMetadata.dataFields;
     const headers = fields.map((key) => model[key]?.label || key);
+
+    const handleDownloadAsCSV = async () => {
+        setDownloading(true);
+        const defaultErrorMsg = 'Error downloading csv. Please try again.';
+        const emptyErrorMsg = 'No data to download.';
+
+        try {
+            const data = await getAllKVEntries(collectionName, defaultErrorMsg, splunkApp);
+            if (data == null || data.length === 0) {
+                throw new Error(emptyErrorMsg);
+            }
+            const csvRawData = formatCSVData(data, fields);
+            downloadFile(csvRawData, 'text/csv', collectionName);
+        } catch (err) {
+            setInfoMessage({
+                visible: true,
+                type: 'error',
+                message: err.message,
+            });
+        }
+
+        setDownloading(false);
+    };
 
     return (
         <div style={style}>
