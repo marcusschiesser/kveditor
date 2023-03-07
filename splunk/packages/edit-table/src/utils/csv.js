@@ -20,10 +20,6 @@ export const formatCSVData = (data, fields) => {
             return rowString;
         })
         .join('\n');
-    console.log('formatCSVData', data, fields);
-    console.log('formattedJsonData', formattedJsonData);
-    console.log('headerLine', headerLine);
-    console.log('csvRawData', csvRawData);
     return `${headerLine}\n${csvRawData}`;
 };
 
