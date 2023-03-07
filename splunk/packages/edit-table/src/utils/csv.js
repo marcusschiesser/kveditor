@@ -1,25 +1,23 @@
 import * as csv from 'csvtojson';
+import { projectFields } from './obj';
 
-export const formatCSVData = (data, omitColumns) => {
-    const omitData = data.map((row) => {
-        const newRow = { ...row };
-        omitColumns.forEach((column) => {
-            delete newRow[column];
-        });
-        return newRow;
-    });
-    const columns = Object.keys(omitData[0]);
-    const headerLine = columns.map((column) => `"${column}"`).join(',');
-    const csvRawData = omitData
+export const formatCSVData = (data, fields) => {
+    const formattedJsonData = projectFields(data, fields);
+    const headerLine = fields.map((column) => `"${column}"`).join(',');
+    const csvRawData = formattedJsonData
         .map((row) => {
-            return Object.values(row)
-                .map((value) => {
-                    if (typeof value === 'string') {
-                        return `"${value}"`;
-                    }
-                    return value;
-                })
-                .join(',');
+            const rowValues = fields.map((column) => {
+                const value = row[column];
+                if (typeof value === 'undefined') {
+                    return '';
+                }
+                if (typeof value === 'string') {
+                    return `"${value}"`;
+                }
+                return value;
+            });
+            const rowString = rowValues.join(',');
+            return rowString;
         })
         .join('\n');
     return `${headerLine}\n${csvRawData}`;
