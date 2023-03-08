@@ -76,4 +76,31 @@ async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp
     return responseData;
 }
 
-export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
+async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app) {
+    const path = `kvstore/backup/create`;
+    const requestInit = {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'X-Splunk-Form-Key': config.CSRFToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        body: {
+            archiveName: `kv_store_backup_${collection}`,
+            appName: splunkApp,
+            collectionName: collection,
+
+        }
+    };
+    const response = await customFetch(path, requestInit, splunkApp);
+    if (!response.ok) {
+        throw new Error(response.statusText || defaultErrorMsg);
+    }
+    console.log("Response", response);
+    const responseData = await response.json();
+    console.log("Data", responseData);
+    return responseData;
+}
+
+export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries, backupKVStore };

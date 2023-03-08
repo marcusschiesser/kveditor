@@ -4,7 +4,7 @@ import P from '@splunk/react-ui/Paragraph';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { batchInsertKVEntries, deleteAllKVEntries } from '../data';
+import { backupKVStore, batchInsertKVEntries, deleteAllKVEntries } from '../data';
 import { convertToJSONArrayFromCSVString } from '../utils/csv';
 import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
 import AbstractModal from './AbstractModal';
@@ -69,10 +69,13 @@ export default function KVStoreUploader({
 
             const formattedJsonData = projectFields(jsonData, dataFields);
 
-            await Promise.all([
-                deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp),
-                batchInsertKVEntries(collectionName, formattedJsonData, uploadErrorMsg, splunkApp),
-            ]);
+            const data = await backupKVStore(collectionName, uploadErrorMsg, splunkApp);
+            console.log('Backup KV Store result: ', data);
+
+            // await Promise.all([
+            //     deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp),
+            //     batchInsertKVEntries(collectionName, formattedJsonData, uploadErrorMsg, splunkApp),
+            // ]);
 
             setInfoMessage({
                 visible: true,
