@@ -1,4 +1,5 @@
 import * as config from '@splunk/splunk-utils/config';
+import { createRESTURL } from '@splunk/splunk-utils/url';
 import { customFetch } from './utils/api';
 
 async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp = config.app) {
@@ -86,14 +87,19 @@ async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json',
         },
-        body: {
+        body: JSON.stringify({
             archiveName: `kv_store_backup_${collection}`,
             appName: splunkApp,
             collectionName: collection,
-
-        }
+        }),
     };
-    const response = await customFetch(path, requestInit, splunkApp);
+
+    const url = createRESTURL(path, {
+        app: splunkApp,
+        owner: 'nobody',
+    });
+    console.log("URL", url);
+    const response = await fetch(url, requestInit);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }
