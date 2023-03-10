@@ -107,11 +107,12 @@ async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-            archiveName: `kv_store_backup_${collection}`,
-            appName: splunkApp,
-            collectionName: collection,
-        }),
+        body: `archiveName=sampleArchive&appName=${splunkApp}&collectionName=${collection}`
+        // body: JSON.stringify({
+        //     archiveName: `kv_store_backup_${collection}`,
+        //     appName: splunkApp,
+        //     collectionName: collection,
+        // }),
         // headers: {
         //     Authorization: 'Basic ' + btoa('admin:changed'),
         //     'Content-Type': 'application/x-www-form-urlencoded',
