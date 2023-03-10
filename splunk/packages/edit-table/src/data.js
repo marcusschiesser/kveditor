@@ -98,7 +98,7 @@ async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app
     //     app: splunkApp,
     //     owner: 'nobody',
     // });
-    const url = `http://127.0.0.1:18000/services/kvstore/backup/create`;
+    const url = `http://127.0.0.1:18000/en-US/services/kvstore/backup/create`;
     const response = await fetch(url, {
         method: 'POST',
         credentials: 'include',
