@@ -98,15 +98,32 @@ async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app
     //     app: splunkApp,
     //     owner: 'nobody',
     // });
-    const url = `http://127.0.0.1:18000/en-US/splunkd/__raw/services/kvstore/backup/create`;
-    console.log("URL", url);
-    const response = await fetch(url, requestInit);
-    console.log("Response", response);
+    const url = `http://127.0.0.1:18000/services/kvstore/backup/create`;
+    const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'X-Splunk-Form-Key': config.CSRFToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify({
+            archiveName: `kv_store_backup_${collection}`,
+            appName: splunkApp,
+            collectionName: collection,
+        }),
+        // headers: {
+        //     Authorization: 'Basic ' + btoa('admin:changed'),
+        //     'Content-Type': 'application/x-www-form-urlencoded',
+        // },
+        // body: 'archiveName=sampleArchive&appName=search&collectionName=testcollection',
+    });
+    console.log('Response', response);
     if (!response.ok) {
         throw new Error(response.statusText || defaultErrorMsg);
     }
     const responseData = await response.json();
-    console.log("Data", responseData);
+    console.log('Data', responseData);
     return responseData;
 }
 
