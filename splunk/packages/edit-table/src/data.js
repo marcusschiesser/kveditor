@@ -78,8 +78,23 @@ async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp
 }
 
 async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app) {
-    const path = `kvstore/backup/create`;
-    const requestInit = {
+    // const path = `kvstore/backup/create`;
+    // const requestInit = {
+    //     method: 'POST',
+    //     credentials: 'include',
+    //     headers: {
+    //         'X-Splunk-Form-Key': config.CSRFToken,
+    //         'X-Requested-With': 'XMLHttpRequest',
+    //         'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //         archiveName: `kv_store_backup_${collection}`,
+    //         appName: splunkApp,
+    //         collectionName: collection,
+    //     }),
+    // };
+
+    const response = await fetch('http://127.0.0.1:18000/services/search/jobs', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -87,38 +102,7 @@ async function backupKVStore(collection, defaultErrorMsg, splunkApp = config.app
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            archiveName: `kv_store_backup_${collection}`,
-            appName: splunkApp,
-            collectionName: collection,
-        }),
-    };
-
-    // const url = createRESTURL(path, {
-    //     app: splunkApp,
-    //     owner: 'nobody',
-    // });
-    const url = `http://127.0.0.1:18000/en-US/splunkd/__raw/services/kvstore/backup/create`;
-    console.log('URL', url);
-    const response = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-            'X-Splunk-Form-Key': config.CSRFToken,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `archiveName=sampleArchive&appName=${splunkApp}&collectionName=${collection}`
-        // body: JSON.stringify({
-        //     archiveName: `kv_store_backup_${collection}`,
-        //     appName: splunkApp,
-        //     collectionName: collection,
-        // }),
-        // headers: {
-        //     Authorization: 'Basic ' + btoa('admin:changed'),
-        //     'Content-Type': 'application/x-www-form-urlencoded',
-        // },
-        // body: 'archiveName=sampleArchive&appName=search&collectionName=testcollection',
+        body: 'search=search *',
     });
     console.log('Response', response);
     if (!response.ok) {
