@@ -1,12 +1,8 @@
-/* eslint-disable no-underscore-dangle */
 import React, { useMemo, useState } from 'react';
-
 import Button from '@splunk/react-ui/Button';
 import Message from '@splunk/react-ui/Message';
 import Table from '@splunk/visualizations/Table';
-
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
-
 import styled from 'styled-components';
 import KVStoreUploader from './components/KVStoreUploader';
 import { useDashboardApi } from './DashboardApiContext';
@@ -30,11 +26,11 @@ const constructLabelMap = (model) => {
         labelMap[label] = key;
     });
     return labelMap;
-}
+};
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { splunkApp, collection: collectionName, model } = options;
+    const { splunkApp, collection: collectionName, kvStore, model } = options;
     const { api } = useDashboardApi();
     const label2key = constructLabelMap(model);
 
@@ -202,6 +198,7 @@ const EditTable = (props) => {
                 setUploadModalOpen={setUploadModalOpen}
                 collectionName={collectionName}
                 splunkApp={splunkApp}
+                kvStore={kvStore}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
                 refreshVisualization={refreshVisualization}

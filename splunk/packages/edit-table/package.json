@@ -31,6 +31,7 @@
     "@splunk/babel-preset": "^3.0.0",
     "@splunk/eslint-config": "^4.0.0",
     "@splunk/splunk-utils": "^2.1.0",
+    "@splunk/search-job": "^2.0.1",
     "@splunk/stylelint-config": "^4.0.0",
     "@splunk/webpack-configs": "^5.0.0",
     "babel-eslint": "^10.1.0",

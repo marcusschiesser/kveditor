@@ -1,6 +1,7 @@
 import Upload from '@splunk/react-icons/Upload';
 import Button from '@splunk/react-ui/Button';
 import P from '@splunk/react-ui/Paragraph';
+import SearchJob from '@splunk/search-job';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import styled from 'styled-components';
@@ -27,6 +28,7 @@ export default function KVStoreUploader({
     setUploadModalOpen,
     collectionName,
     splunkApp,
+    kvStore,
     tableMetadata,
     setInfoMessage,
     refreshVisualization,
@@ -34,23 +36,58 @@ export default function KVStoreUploader({
     const [uploading, setUploading] = useState(false);
     const [uploadedCSVContent, setUploadedCSVContent] = useState();
 
+    const executeJob = async (job, errorMessage) => {
+        try {
+            const response = await job.getResults().toPromise();
+            const errorMessages = response?.messages?.filter((msg) => msg.type === 'ERROR');
+            if (errorMessages && errorMessages.length > 0) {
+                console.error('Execute Job Error From Response', response);
+                throw new Error(errorMessages.map((msg) => msg.text).join('\n'));
+            }
+        } catch (err) {
+            console.error('Execute Job Error', err);
+            throw new Error(err?.message || errorMessage);
+        }
+    };
+
+    const createBackupForKvStore = async (errorMessage) => {
+        const backupJob = SearchJob.create(
+            { search: `|inputlookup ${kvStore} |outputlookup ${kvStore}.bak.csv` },
+            { app: splunkApp, owner: 'admin' }
+        );
+        return executeJob(backupJob, errorMessage);
+    };
+
+    const restoreKvStoreFromBackup = async (errorMessage) => {
+        const restoreJob = SearchJob.create(
+            {
+                search: `|inputlookup ${kvStore}.bak.csv |outputlookup ${kvStore}`,
+            },
+            { app: splunkApp, owner: 'admin' }
+        );
+        return executeJob(restoreJob, errorMessage);
+    };
+
     const onCloseUploadModal = () => {
         setUploadModalOpen(false);
         setUploadedCSVContent(undefined);
     };
     const handleFileChange = (fileContent) => setUploadedCSVContent(fileContent);
     const handleUploadCSV = async () => {
-        if (tableMetadata == null) {
-            return;
-        }
+        if (tableMetadata == null) return;
 
-        setUploading(true);
-        const { dataFields, totalItems } = tableMetadata;
         const emptyErrorMsg = 'No data to upload.';
         const emptyCSVErrorMsg = 'CSV file is empty.';
         const dataFieldErrorMsg = 'CSV file have no enough data fields.';
+        const backupErrorMsg = 'Error creating backup for KV Store. Please try again later.';
         const deleteErrorMsg = 'Error deleting all entries. Please try again.';
         const uploadErrorMsg = 'Error uploading csv. Please try again.';
+        const restoreErrorMsg = 'Error restoring KV Store. If data is lost, please contact admin.';
+
+        const { dataFields, totalItems } = tableMetadata;
+        let isBackupCreated = false;
+        let isUploadSuccess = false;
+        setUploading(true);
 
         try {
             if (uploadedCSVContent == null) {
@@ -67,31 +104,51 @@ export default function KVStoreUploader({
                 throw new Error(dataFieldErrorMsg);
             }
 
+            await createBackupForKvStore(backupErrorMsg);
+            isBackupCreated = true;
+
+            await deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp);
+
             const formattedJsonData = projectFields(jsonData, dataFields);
+            await batchInsertKVEntries(
+                collectionName,
+                formattedJsonData,
+                uploadErrorMsg,
+                splunkApp
+            );
 
-            await Promise.all([
-                deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp),
-                batchInsertKVEntries(collectionName, formattedJsonData, uploadErrorMsg, splunkApp),
-            ]);
-
+            isUploadSuccess = true;
             setInfoMessage({
                 visible: true,
                 type: 'success',
                 message: `CSV file successfully uploaded. Removed ${totalItems} items and added ${formattedJsonData.length} items.`,
             });
-
-            refreshVisualization();
-        } catch (err) {
+        } catch (error) {
+            console.error(error);
             setInfoMessage({
                 visible: true,
                 type: 'error',
-                message: err.message,
+                message: error.message,
             });
         }
 
+        if (isBackupCreated && !isUploadSuccess) {
+            try {
+                await restoreKvStoreFromBackup(restoreErrorMsg);
+            } catch (error) {
+                console.error(error);
+                setInfoMessage({
+                    visible: true,
+                    type: 'error',
+                    message: error.message,
+                });
+            }
+        }
+
+        setUploadedCSVContent(undefined);
         setUploading(false);
         setUploadModalOpen(false);
-        setUploadedCSVContent(undefined);
+        refreshVisualization();
     };
 
     return (
@@ -128,6 +185,7 @@ KVStoreUploader.propTypes = {
     setUploadModalOpen: PropTypes.func.isRequired,
     collectionName: PropTypes.string.isRequired,
     splunkApp: PropTypes.string,
+    kvStore: PropTypes.string,
     setInfoMessage: PropTypes.func.isRequired,
     refreshVisualization: PropTypes.func.isRequired,
     tableMetadata: PropTypes.shape({
