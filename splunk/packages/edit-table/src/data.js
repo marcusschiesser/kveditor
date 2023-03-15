@@ -1,4 +1,5 @@
 import * as config from '@splunk/splunk-utils/config';
+import SearchJob from '@splunk/search-job';
 import { customFetch } from './utils/api';
 
 async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp = config.app) {
@@ -76,4 +77,43 @@ async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp
     return responseData;
 }
 
-export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
+const executeJob = async (job, errorMessage) => {
+    try {
+        const response = await job.getResults().toPromise();
+        const errorMessages = response?.messages?.filter((msg) => msg.type === 'ERROR');
+        if (errorMessages && errorMessages.length > 0) {
+            console.error('Execute Job Error From Response', response);
+            throw new Error(errorMessages.map((msg) => msg.text).join('\n'));
+        }
+    } catch (err) {
+        console.error('Execute Job Error', err);
+        throw new Error(err?.message || errorMessage);
+    }
+};
+
+const createBackupForKvStore = async (splunkApp, kvStore, errorMessage) => {
+    const backupJob = SearchJob.create(
+        { search: `|inputlookup ${kvStore} |outputlookup ${kvStore}.bak.csv` },
+        { app: splunkApp }
+    );
+    return executeJob(backupJob, errorMessage);
+};
+
+const restoreKvStoreFromBackup = async (splunkApp, kvStore, errorMessage) => {
+    const restoreJob = SearchJob.create(
+        {
+            search: `|inputlookup ${kvStore}.bak.csv |outputlookup ${kvStore}`,
+        },
+        { app: splunkApp }
+    );
+    return executeJob(restoreJob, errorMessage);
+};
+
+export {
+    updateKVEntry,
+    getAllKVEntries,
+    deleteAllKVEntries,
+    batchInsertKVEntries,
+    createBackupForKvStore,
+    restoreKvStoreFromBackup,
+};

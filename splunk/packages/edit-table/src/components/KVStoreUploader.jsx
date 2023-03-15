@@ -1,11 +1,10 @@
 import Upload from '@splunk/react-icons/Upload';
 import Button from '@splunk/react-ui/Button';
 import P from '@splunk/react-ui/Paragraph';
-import SearchJob from '@splunk/search-job';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { batchInsertKVEntries, deleteAllKVEntries } from '../data';
+import { batchInsertKVEntries, createBackupForKvStore, deleteAllKVEntries, restoreKvStoreFromBackup } from '../data';
 import { convertToJSONArrayFromCSVString } from '../utils/csv';
 import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
 import AbstractModal from './AbstractModal';
@@ -35,38 +34,6 @@ export default function KVStoreUploader({
 }) {
     const [uploading, setUploading] = useState(false);
     const [uploadedCSVContent, setUploadedCSVContent] = useState();
-
-    const executeJob = async (job, errorMessage) => {
-        try {
-            const response = await job.getResults().toPromise();
-            const errorMessages = response?.messages?.filter((msg) => msg.type === 'ERROR');
-            if (errorMessages && errorMessages.length > 0) {
-                console.error('Execute Job Error From Response', response);
-                throw new Error(errorMessages.map((msg) => msg.text).join('\n'));
-            }
-        } catch (err) {
-            console.error('Execute Job Error', err);
-            throw new Error(err?.message || errorMessage);
-        }
-    };
-
-    const createBackupForKvStore = async (errorMessage) => {
-        const backupJob = SearchJob.create(
-            { search: `|inputlookup ${kvStore} |outputlookup ${kvStore}.bak.csv` },
-            { app: splunkApp, owner: 'admin' }
-        );
-        return executeJob(backupJob, errorMessage);
-    };
-
-    const restoreKvStoreFromBackup = async (errorMessage) => {
-        const restoreJob = SearchJob.create(
-            {
-                search: `|inputlookup ${kvStore}.bak.csv |outputlookup ${kvStore}`,
-            },
-            { app: splunkApp, owner: 'admin' }
-        );
-        return executeJob(restoreJob, errorMessage);
-    };
 
     const onCloseUploadModal = () => {
         setUploadModalOpen(false);
@@ -104,7 +71,7 @@ export default function KVStoreUploader({
                 throw new Error(dataFieldErrorMsg);
             }
 
-            await createBackupForKvStore(backupErrorMsg);
+            await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
             isBackupCreated = true;
 
             await deleteAllKVEntries(collectionName, deleteErrorMsg, splunkApp);
@@ -134,7 +101,7 @@ export default function KVStoreUploader({
 
         if (isBackupCreated && !isUploadSuccess) {
             try {
-                await restoreKvStoreFromBackup(restoreErrorMsg);
+                await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
             } catch (error) {
                 console.error(error);
                 setInfoMessage({
