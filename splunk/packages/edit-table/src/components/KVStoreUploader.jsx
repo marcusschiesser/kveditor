@@ -18,6 +18,7 @@ import SingleFileUpload from './SingleFileUpload';
 // TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
 const FILE_SIZE_LIMIT_GB = 1;
 const FILE_SIZE_LIMIT_BYTE = FILE_SIZE_LIMIT_GB * 1024 * 1024 * 1024;
+const BATCH_SIZE = 1000;
 
 const ModalButtonActionGroup = styled.div`
     display: flex;
@@ -115,10 +116,21 @@ export default function KVStoreUploader({
         }
     };
 
+    const batchInsertCollectionEntries = (newData) => {
+        const promises = [];
+        for (let i = 0; i < newData.length; i += BATCH_SIZE) {
+            const chunk = newData.slice(i, i + BATCH_SIZE);
+            promises.push(
+                insertCollectionEntries(splunkApp, collectionName, chunk, uploadErrorMsg)
+            );
+        }
+        return promises;
+    };
+
     const doKvStoreChanges = async (newData) => {
         try {
             await deleteAllCollectionEntries(splunkApp, collectionName, deleteErrorMsg);
-            await insertCollectionEntries(splunkApp, collectionName, newData, uploadErrorMsg);
+            await Promise.all(batchInsertCollectionEntries(newData));
             showSuccessMessage(
                 `CSV file successfully uploaded. Removed ${totalItems} items and added ${newData.length} items.`
             );
