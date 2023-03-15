@@ -6,7 +6,7 @@ import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualizati
 import styled from 'styled-components';
 import KVStoreUploader from './components/KVStoreUploader';
 import { useDashboardApi } from './DashboardApiContext';
-import { getAllKVEntries, updateKVEntry } from './data';
+import { getAllCollectionEntries, updateCollectionEntry } from './data';
 import ModalComponent from './ModalComponent';
 import { formatCSVData } from './utils/csv';
 import { downloadFile } from './utils/file';
@@ -70,7 +70,7 @@ const EditTable = (props) => {
         setOpenModal(false);
         setInfoMessage({ visible: true, message: 'Updating...' });
         const defaultErrorMsg = 'Error updating row. Please try again.';
-        updateKVEntry(collectionName, row._key, row, defaultErrorMsg, splunkApp)
+        updateCollectionEntry(splunkApp, collectionName, row._key, row, defaultErrorMsg)
             .then(() => {
                 setInfoMessage({
                     visible: true,
@@ -151,7 +151,7 @@ const EditTable = (props) => {
         const emptyErrorMsg = 'No data to download.';
 
         try {
-            const data = await getAllKVEntries(collectionName, defaultErrorMsg, splunkApp);
+            const data = await getAllCollectionEntries(splunkApp, collectionName, defaultErrorMsg);
             if (data == null || data.length === 0) {
                 throw new Error(emptyErrorMsg);
             }

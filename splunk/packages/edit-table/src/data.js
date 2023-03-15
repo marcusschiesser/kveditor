@@ -2,7 +2,7 @@ import * as config from '@splunk/splunk-utils/config';
 import SearchJob from '@splunk/search-job';
 import { customFetch } from './utils/api';
 
-async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp = config.app) {
+async function updateCollectionEntry(splunkApp, collection, key, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
     const requestInit = {
         method: 'POST',
@@ -22,7 +22,7 @@ async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp =
     return responseData;
 }
 
-async function getAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
+async function getAllCollectionEntries(splunkApp, collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'GET',
@@ -40,7 +40,7 @@ async function getAllKVEntries(collection, defaultErrorMsg, splunkApp = config.a
     return responseData;
 }
 
-async function deleteAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
+async function deleteAllCollectionEntries(splunkApp, collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'DELETE',
@@ -57,7 +57,7 @@ async function deleteAllKVEntries(collection, defaultErrorMsg, splunkApp = confi
     return null;
 }
 
-async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp = config.app) {
+async function insertCollectionEntries(splunkApp, collection, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/batch_save`;
     const requestInit = {
         method: 'POST',
@@ -110,10 +110,10 @@ const restoreKvStoreFromBackup = async (splunkApp, kvStore, errorMessage) => {
 };
 
 export {
-    updateKVEntry,
-    getAllKVEntries,
-    deleteAllKVEntries,
-    batchInsertKVEntries,
+    updateCollectionEntry,
+    getAllCollectionEntries,
+    deleteAllCollectionEntries,
+    insertCollectionEntries,
     createBackupForKvStore,
     restoreKvStoreFromBackup,
 };
