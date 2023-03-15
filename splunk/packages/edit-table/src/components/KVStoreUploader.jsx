@@ -94,28 +94,6 @@ export default function KVStoreUploader({
         return formattedJsonData;
     };
 
-    const runBackup = async () => {
-        try {
-            await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
-            return true;
-        } catch (error) {
-            console.error(error);
-            showErrorMessage(error.message);
-            return false;
-        }
-    };
-
-    const runRestore = async () => {
-        try {
-            await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
-            return true;
-        } catch (error) {
-            console.error(error);
-            showErrorMessage(error.message);
-            return false;
-        }
-    };
-
     const batchInsertCollectionEntries = (newData) => {
         const promises = [];
         for (let i = 0; i < newData.length; i += BATCH_SIZE) {
@@ -127,33 +105,39 @@ export default function KVStoreUploader({
         return promises;
     };
 
-    const doKvStoreChanges = async (newData) => {
+    const doKvStoreChanges = async (callback) => {
+        await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
         try {
-            await deleteAllCollectionEntries(splunkApp, collectionName, deleteErrorMsg);
-            await Promise.all(batchInsertCollectionEntries(newData));
-            showSuccessMessage(
-                `CSV file successfully uploaded. Removed ${totalItems} items and added ${newData.length} items.`
-            );
-            return true;
-        } catch (error) {
-            console.error(error);
-            showErrorMessage(error.message);
-            return false;
+            await callback();
+        } catch (changeError) {
+            try {
+                await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
+            } catch (restoreError) {
+                throw new Error(
+                    `Update Error: ${changeError.message}. Backup Error: ${restoreError.message}`
+                );
+            }
+            throw changeError;
         }
     };
 
     const runUpload = async () => {
-        // Transform data
-        const tranformResult = await transformData();
-        if (!tranformResult) return showErrorMessage(tranformResult.errorMsg);
+        const data = await transformData();
+        if (!data) return;
 
-        // Backup KV Store
-        const backupResult = await runBackup();
-        if (!backupResult) return;
-
-        // Upload CSV
-        const uploadResult = await doKvStoreChanges(tranformResult);
-        if (!uploadResult) await runRestore();
+        try {
+            const callback = async () => {
+                await deleteAllCollectionEntries(splunkApp, collectionName, deleteErrorMsg);
+                await Promise.all(batchInsertCollectionEntries(data));
+            };
+            await doKvStoreChanges(callback);
+            showSuccessMessage(
+                `CSV file successfully uploaded. Removed ${totalItems} items and added ${data.length} items.`
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(error.message);
+        }
     };
 
     const handleUploadCSV = async () => {
