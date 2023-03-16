@@ -2,6 +2,8 @@ import * as config from '@splunk/splunk-utils/config';
 import SearchJob from '@splunk/search-job';
 import { customFetch } from './utils/api';
 
+const BATCH_SIZE = 1000;
+
 async function updateCollectionEntry(splunkApp, collection, key, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
     const requestInit = {
@@ -109,11 +111,39 @@ const restoreKvStoreFromBackup = async (splunkApp, kvStore, errorMessage) => {
     return executeJob(restoreJob, errorMessage);
 };
 
+const batchInsertCollectionEntries = (splunkApp, collection, newData, defaultErrorMsg) => {
+    const promises = [];
+    for (let i = 0; i < newData.length; i += BATCH_SIZE) {
+        const chunk = newData.slice(i, i + BATCH_SIZE);
+        promises.push(insertCollectionEntries(splunkApp, collection, chunk, defaultErrorMsg));
+    }
+    return promises;
+};
+
+const doKvStoreChanges = async (
+    { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg },
+    callback
+) => {
+    await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
+    try {
+        await callback();
+    } catch (updateError) {
+        try {
+            await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
+        } catch (restoreError) {
+            throw new Error(
+                `Update Error: ${updateError.message}. Restore Error: ${restoreError.message}`
+            );
+        }
+        throw updateError;
+    }
+};
+
 export {
     updateCollectionEntry,
     getAllCollectionEntries,
     deleteAllCollectionEntries,
     insertCollectionEntries,
-    createBackupForKvStore,
-    restoreKvStoreFromBackup,
+    batchInsertCollectionEntries,
+    doKvStoreChanges,
 };

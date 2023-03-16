@@ -5,10 +5,9 @@ import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import {
-    insertCollectionEntries,
-    createBackupForKvStore,
+    batchInsertCollectionEntries,
     deleteAllCollectionEntries,
-    restoreKvStoreFromBackup,
+    doKvStoreChanges,
 } from '../data';
 import { convertToJSONArrayFromCSVString } from '../utils/csv';
 import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
@@ -18,7 +17,6 @@ import SingleFileUpload from './SingleFileUpload';
 // TODO(thucpn): Research about limit size of CSV file to batch upload to KV store
 const FILE_SIZE_LIMIT_GB = 1;
 const FILE_SIZE_LIMIT_BYTE = FILE_SIZE_LIMIT_GB * 1024 * 1024 * 1024;
-const BATCH_SIZE = 1000;
 
 const ModalButtonActionGroup = styled.div`
     display: flex;
@@ -94,43 +92,19 @@ export default function KVStoreUploader({
         return formattedJsonData;
     };
 
-    const batchInsertCollectionEntries = (newData) => {
-        const promises = [];
-        for (let i = 0; i < newData.length; i += BATCH_SIZE) {
-            const chunk = newData.slice(i, i + BATCH_SIZE);
-            promises.push(
-                insertCollectionEntries(splunkApp, collectionName, chunk, uploadErrorMsg)
-            );
-        }
-        return promises;
-    };
-
-    const doKvStoreChanges = async (callback) => {
-        await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
-        try {
-            await callback();
-        } catch (changeError) {
-            try {
-                await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
-            } catch (restoreError) {
-                throw new Error(
-                    `Update Error: ${changeError.message}. Backup Error: ${restoreError.message}`
-                );
-            }
-            throw changeError;
-        }
-    };
-
     const runUpload = async () => {
         const data = await transformData();
         if (!data) return;
 
         try {
+            const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
             const callback = async () => {
                 await deleteAllCollectionEntries(splunkApp, collectionName, deleteErrorMsg);
-                await Promise.all(batchInsertCollectionEntries(data));
+                await Promise.all(
+                    batchInsertCollectionEntries(splunkApp, collectionName, data, uploadErrorMsg)
+                );
             };
-            await doKvStoreChanges(callback);
+            await doKvStoreChanges(options, callback);
             showSuccessMessage(
                 `CSV file successfully uploaded. Removed ${totalItems} items and added ${data.length} items.`
             );
