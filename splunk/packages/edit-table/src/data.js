@@ -1,7 +1,10 @@
 import * as config from '@splunk/splunk-utils/config';
+import SearchJob from '@splunk/search-job';
 import { customFetch } from './utils/api';
 
-async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp = config.app) {
+const BATCH_SIZE = 1000;
+
+async function updateCollectionEntry(splunkApp, collection, key, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/${encodeURIComponent(key)}`;
     const requestInit = {
         method: 'POST',
@@ -21,7 +24,7 @@ async function updateKVEntry(collection, key, data, defaultErrorMsg, splunkApp =
     return responseData;
 }
 
-async function getAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
+async function getAllCollectionEntries(splunkApp, collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'GET',
@@ -39,7 +42,7 @@ async function getAllKVEntries(collection, defaultErrorMsg, splunkApp = config.a
     return responseData;
 }
 
-async function deleteAllKVEntries(collection, defaultErrorMsg, splunkApp = config.app) {
+async function deleteAllCollectionEntries(splunkApp, collection, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}`;
     const requestInit = {
         method: 'DELETE',
@@ -56,7 +59,7 @@ async function deleteAllKVEntries(collection, defaultErrorMsg, splunkApp = confi
     return null;
 }
 
-async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp = config.app) {
+async function insertCollectionEntries(splunkApp, collection, data, defaultErrorMsg) {
     const path = `storage/collections/data/${collection}/batch_save`;
     const requestInit = {
         method: 'POST',
@@ -76,4 +79,71 @@ async function batchInsertKVEntries(collection, data, defaultErrorMsg, splunkApp
     return responseData;
 }
 
-export { updateKVEntry, getAllKVEntries, deleteAllKVEntries, batchInsertKVEntries };
+const executeJob = async (job, errorMessage) => {
+    try {
+        const response = await job.getResults().toPromise();
+        const errorMessages = response?.messages?.filter((msg) => msg.type === 'ERROR');
+        if (errorMessages && errorMessages.length > 0) {
+            console.error('Execute Job Error From Response', response);
+            throw new Error(errorMessages.map((msg) => msg.text).join('\n'));
+        }
+    } catch (err) {
+        console.error('Execute Job Error', err);
+        throw new Error(err?.message || errorMessage);
+    }
+};
+
+const createBackupForKvStore = async (splunkApp, kvStore, errorMessage) => {
+    const backupJob = SearchJob.create(
+        { search: `|inputlookup ${kvStore} |outputlookup ${kvStore}.bak.csv` },
+        { app: splunkApp }
+    );
+    return executeJob(backupJob, errorMessage);
+};
+
+const restoreKvStoreFromBackup = async (splunkApp, kvStore, errorMessage) => {
+    const restoreJob = SearchJob.create(
+        {
+            search: `|inputlookup ${kvStore}.bak.csv |outputlookup ${kvStore}`,
+        },
+        { app: splunkApp }
+    );
+    return executeJob(restoreJob, errorMessage);
+};
+
+const batchInsertCollectionEntries = (splunkApp, collection, newData, defaultErrorMsg) => {
+    const promises = [];
+    for (let i = 0; i < newData.length; i += BATCH_SIZE) {
+        const chunk = newData.slice(i, i + BATCH_SIZE);
+        promises.push(insertCollectionEntries(splunkApp, collection, chunk, defaultErrorMsg));
+    }
+    return promises;
+};
+
+const doKvStoreChanges = async (
+    { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg },
+    callback
+) => {
+    await createBackupForKvStore(splunkApp, kvStore, backupErrorMsg);
+    try {
+        await callback();
+    } catch (updateError) {
+        try {
+            await restoreKvStoreFromBackup(splunkApp, kvStore, restoreErrorMsg);
+        } catch (restoreError) {
+            throw new Error(
+                `Update Error: ${updateError.message}. Restore Error: ${restoreError.message}`
+            );
+        }
+        throw updateError;
+    }
+};
+
+export {
+    updateCollectionEntry,
+    getAllCollectionEntries,
+    deleteAllCollectionEntries,
+    insertCollectionEntries,
+    batchInsertCollectionEntries,
+    doKvStoreChanges,
+};

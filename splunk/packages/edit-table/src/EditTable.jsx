@@ -1,16 +1,12 @@
-/* eslint-disable no-underscore-dangle */
 import React, { useMemo, useState } from 'react';
-
 import Button from '@splunk/react-ui/Button';
 import Message from '@splunk/react-ui/Message';
 import Table from '@splunk/visualizations/Table';
-
 import SplunkVisualization from '@splunk/visualizations/common/SplunkVisualization';
-
 import styled from 'styled-components';
 import KVStoreUploader from './components/KVStoreUploader';
 import { useDashboardApi } from './DashboardApiContext';
-import { getAllKVEntries, updateKVEntry } from './data';
+import { getAllCollectionEntries, updateCollectionEntry } from './data';
 import ModalComponent from './ModalComponent';
 import { formatCSVData } from './utils/csv';
 import { downloadFile } from './utils/file';
@@ -30,11 +26,11 @@ const constructLabelMap = (model) => {
         labelMap[label] = key;
     });
     return labelMap;
-}
+};
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { splunkApp, collection: collectionName, model } = options;
+    const { splunkApp, collection: collectionName, kvStore, model } = options;
     const { api } = useDashboardApi();
     const label2key = constructLabelMap(model);
 
@@ -74,7 +70,7 @@ const EditTable = (props) => {
         setOpenModal(false);
         setInfoMessage({ visible: true, message: 'Updating...' });
         const defaultErrorMsg = 'Error updating row. Please try again.';
-        updateKVEntry(collectionName, row._key, row, defaultErrorMsg, splunkApp)
+        updateCollectionEntry(splunkApp, collectionName, row._key, row, defaultErrorMsg)
             .then(() => {
                 setInfoMessage({
                     visible: true,
@@ -155,7 +151,7 @@ const EditTable = (props) => {
         const emptyErrorMsg = 'No data to download.';
 
         try {
-            const data = await getAllKVEntries(collectionName, defaultErrorMsg, splunkApp);
+            const data = await getAllCollectionEntries(splunkApp, collectionName, defaultErrorMsg);
             if (data == null || data.length === 0) {
                 throw new Error(emptyErrorMsg);
             }
@@ -202,6 +198,7 @@ const EditTable = (props) => {
                 setUploadModalOpen={setUploadModalOpen}
                 collectionName={collectionName}
                 splunkApp={splunkApp}
+                kvStore={kvStore}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
                 refreshVisualization={refreshVisualization}

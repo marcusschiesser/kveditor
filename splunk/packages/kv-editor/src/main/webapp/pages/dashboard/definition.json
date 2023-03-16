@@ -22,7 +22,9 @@
         "lineStrokeWidth": 4,
         "lineLength": 10,
         "width": 240,
+        "splunkApp": "kv-editor",
         "collection": "example_collection",
+        "kvStore": "example_kv",
         "model": {
           "Score": {
             "label": "ScoreInput",
