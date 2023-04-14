@@ -6,8 +6,10 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import {
     batchInsertCollectionEntries,
+    batchUpdateCollectionEntries,
     deleteAllCollectionEntries,
     doKvStoreChanges,
+    getAllCollectionEntries,
 } from '../data';
 import { convertToJSONArrayFromCSVString } from '../utils/csv';
 import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
@@ -32,6 +34,8 @@ const backupErrorMsg = 'Error creating backup for KV Store. Please try again lat
 const deleteErrorMsg = 'Error deleting all entries. Please try again.';
 const uploadErrorMsg = 'Error uploading csv. Please try again.';
 const restoreErrorMsg = 'Error restoring KV Store. If data is lost, please contact admin.';
+const fetchAllErrorMsg = 'Error fetching all entries. Please try again.';
+const updateErrorMsg = 'Error updating entry.';
 
 // TODO(thucpn): So many props here, in the feature, we can consider create EditTable context to pass down props
 export default function KVStoreUploader({
@@ -40,6 +44,8 @@ export default function KVStoreUploader({
     collectionName,
     splunkApp,
     kvStore,
+    uploadMode,
+    primaryKey,
     tableMetadata,
     setInfoMessage,
     refreshVisualization,
@@ -47,6 +53,8 @@ export default function KVStoreUploader({
     const { dataFields, totalItems } = tableMetadata;
     const [uploading, setUploading] = useState(false);
     const [uploadedCSVContent, setUploadedCSVContent] = useState();
+
+    const isReplaceUploadMode = uploadMode === 'replace';
 
     const showErrorMessage = (message) => {
         setInfoMessage({
@@ -70,7 +78,7 @@ export default function KVStoreUploader({
     };
     const handleFileChange = (fileContent) => setUploadedCSVContent(fileContent);
 
-    const transformData = async () => {
+    const getFormattedData = async () => {
         if (uploadedCSVContent == null) {
             showErrorMessage(emptyErrorMsg);
             return false;
@@ -82,19 +90,69 @@ export default function KVStoreUploader({
             return false;
         }
 
-        const isCorrectFormat = checkJsonArrayCorrectFormat(jsonData, dataFields);
+        // Remove _key field from dataFields because we don't need it in the uploaded data
+        const dataFieldsWithoutKey = dataFields.filter((field) => field !== '_key');
+
+        const isCorrectFormat = checkJsonArrayCorrectFormat(jsonData, dataFieldsWithoutKey);
         if (!isCorrectFormat) {
             showErrorMessage(dataFieldErrorMsg);
             return false;
         }
 
-        const formattedJsonData = projectFields(jsonData, dataFields);
+        const formattedJsonData = projectFields(jsonData, dataFieldsWithoutKey);
         return formattedJsonData;
     };
 
-    const runUpload = async () => {
-        const data = await transformData();
-        if (!data) return;
+    // Build a map of primary key and entry. Eg. ERR-01 -> { code: ERR-01, name: Error 1, ... }
+    const buildEntriesMap = (entries) => {
+        const entriesMap = new Map();
+        entries.forEach((entry) => {
+            entriesMap.set(entry[primaryKey], entry);
+        });
+        return entriesMap;
+    };
+
+    const getIncrementalUploadData = async (newData) => {
+        // If primary key is not set, insert all new data
+        if (!primaryKey) {
+            return {
+                dataForUpdate: [],
+                dataForInsert: newData,
+            };
+        }
+
+        // If there is no data in KV store, insert all new data
+        const entries = await getAllCollectionEntries(splunkApp, collectionName, fetchAllErrorMsg);
+        if (entries == null || entries.length === 0) {
+            return {
+                dataForUpdate: [],
+                dataForInsert: newData,
+            };
+        }
+
+        // Build entries map and get data for update and data for batch insert
+        const entriesMap = buildEntriesMap(entries);
+        const dataForUpdate = [];
+        const dataForInsert = [];
+        newData.forEach((newItem) => {
+            const primaryKeyValue = newItem[primaryKey];
+            if (entriesMap.has(primaryKeyValue)) {
+                const { _key } = entriesMap.get(primaryKeyValue);
+                dataForUpdate.push({ ...newItem, _key });
+            } else {
+                dataForInsert.push(newItem);
+            }
+        });
+
+        return {
+            dataForUpdate,
+            dataForInsert,
+        };
+    };
+
+    const runReplaceUpload = async () => {
+        const data = await getFormattedData();
+        if (!data || data.length === 0) return;
 
         try {
             const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
@@ -114,9 +172,54 @@ export default function KVStoreUploader({
         }
     };
 
+    const runIncrementalUpload = async () => {
+        const data = await getFormattedData();
+        if (!data) return;
+
+        const { dataForUpdate, dataForInsert } = await getIncrementalUploadData(data);
+
+        try {
+            const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
+            const callback = async () => {
+                if (dataForUpdate.length > 0) {
+                    await Promise.all(
+                        batchUpdateCollectionEntries(
+                            splunkApp,
+                            collectionName,
+                            dataForUpdate,
+                            updateErrorMsg
+                        )
+                    );
+                }
+
+                if (dataForInsert.length > 0) {
+                    await Promise.all(
+                        batchInsertCollectionEntries(
+                            splunkApp,
+                            collectionName,
+                            dataForInsert,
+                            uploadErrorMsg
+                        )
+                    );
+                }
+            };
+            await doKvStoreChanges(options, callback);
+            showSuccessMessage(
+                `CSV file successfully uploaded. Update ${dataForUpdate.length} items and added ${dataForInsert.length} items.`
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(error.message);
+        }
+    };
+
     const handleUploadCSV = async () => {
         setUploading(true);
-        await runUpload();
+        if (isReplaceUploadMode) {
+            await runReplaceUpload();
+        } else {
+            await runIncrementalUpload();
+        }
         setUploading(false);
         setUploadedCSVContent(undefined);
         setUploadModalOpen(false);
@@ -158,6 +261,8 @@ KVStoreUploader.propTypes = {
     collectionName: PropTypes.string.isRequired,
     splunkApp: PropTypes.string,
     kvStore: PropTypes.string,
+    uploadMode: PropTypes.string, // 'replace' or 'incremental'
+    primaryKey: PropTypes.string, // could be undefined
     setInfoMessage: PropTypes.func.isRequired,
     refreshVisualization: PropTypes.func.isRequired,
     tableMetadata: PropTypes.shape({

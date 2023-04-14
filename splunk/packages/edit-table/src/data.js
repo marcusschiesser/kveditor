@@ -120,6 +120,22 @@ const batchInsertCollectionEntries = (splunkApp, collection, newData, defaultErr
     return promises;
 };
 
+const batchUpdateCollectionEntries = (splunkApp, collection, newData, defaultErrorMsg) => {
+    const promises = [];
+    newData.forEach((entry) => {
+        promises.push(
+            updateCollectionEntry(
+                splunkApp,
+                collection,
+                entry._key,
+                entry,
+                `${defaultErrorMsg}. Entry Key: ${entry._key}`
+            )
+        );
+    });
+    return promises;
+};
+
 const doKvStoreChanges = async (
     { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg },
     callback
@@ -145,5 +161,6 @@ export {
     deleteAllCollectionEntries,
     insertCollectionEntries,
     batchInsertCollectionEntries,
+    batchUpdateCollectionEntries,
     doKvStoreChanges,
 };
