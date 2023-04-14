@@ -27,6 +27,7 @@
         "kvStore": "example_kv",
         "uploadMode": "incremental",
         "primaryKey": "Title",
+        "_keyIncludeInCSV": false,
         "model": {
           "Score": {
             "label": "ScoreInput",

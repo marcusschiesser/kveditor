@@ -30,7 +30,15 @@ const constructLabelMap = (model) => {
 
 const EditTable = (props) => {
     const { id, dataSources, onRequestParamsChange, width, height, options } = props;
-    const { splunkApp, collection: collectionName, kvStore, model, uploadMode, primaryKey } = options;
+    const {
+        splunkApp,
+        collection: collectionName,
+        kvStore,
+        model,
+        uploadMode,
+        primaryKey,
+        _keyIncludeInCSV,
+    } = options;
     const { api } = useDashboardApi();
     const label2key = constructLabelMap(model);
 
@@ -201,6 +209,7 @@ const EditTable = (props) => {
                 kvStore={kvStore}
                 uploadMode={uploadMode}
                 primaryKey={primaryKey}
+                _keyIncludeInCSV={_keyIncludeInCSV}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
                 refreshVisualization={refreshVisualization}
