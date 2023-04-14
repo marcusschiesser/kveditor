@@ -252,7 +252,7 @@ export default function KVStoreUploader({
                     disabled={!uploadedCSVContent || uploading}
                     onClick={handleUploadCSV}
                 >
-                    Confirm Upload 123
+                    Confirm Upload
                 </Button>
             </ModalButtonActionGroup>
         </AbstractModal>
