@@ -131,11 +131,6 @@ export default function KVStoreUploader({
             }
         });
 
-        console.log({
-            dataForUpdate,
-            dataForInsert,
-        });
-
         return {
             dataForUpdate,
             dataForInsert,
@@ -167,8 +162,6 @@ export default function KVStoreUploader({
     const runIncrementalUpload = async () => {
         const data = await getFormattedData();
         if (!data) return;
-
-        console.log('data', data);
 
         const { dataForUpdate, dataForInsert } = await getIncrementalUploadData(data);
 
@@ -242,7 +235,7 @@ export default function KVStoreUploader({
                     disabled={!uploadedCSVContent || uploading}
                     onClick={handleUploadCSV}
                 >
-                    Confirm Upload 123
+                    Confirm Upload
                 </Button>
             </ModalButtonActionGroup>
         </AbstractModal>
