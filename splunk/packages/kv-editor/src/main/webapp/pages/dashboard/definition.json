@@ -26,7 +26,6 @@
         "collection": "example_collection",
         "kvStore": "example_kv",
         "uploadMode": "incremental",
-        "primaryKey": "Title",
         "_keyIncludeInCSV": false,
         "model": {
           "Score": {

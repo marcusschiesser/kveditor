@@ -36,7 +36,6 @@ const EditTable = (props) => {
         kvStore,
         model,
         uploadMode,
-        primaryKey,
         _keyIncludeInCSV,
     } = options;
     const { api } = useDashboardApi();
@@ -208,7 +207,6 @@ const EditTable = (props) => {
                 splunkApp={splunkApp}
                 kvStore={kvStore}
                 uploadMode={uploadMode}
-                primaryKey={primaryKey}
                 _keyIncludeInCSV={_keyIncludeInCSV}
                 tableMetadata={tableMetadata}
                 setInfoMessage={setInfoMessage}
