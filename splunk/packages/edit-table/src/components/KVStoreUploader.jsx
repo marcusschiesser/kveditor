@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import {
     batchInsertCollectionEntries,
-    batchUpdateCollectionEntries,
+    batchUpsertCollectionEntries,
     deleteAllCollectionEntries,
     doKvStoreChanges,
     getAllCollectionEntries,
@@ -163,32 +163,19 @@ export default function KVStoreUploader({
         const data = await getFormattedData();
         if (!data) return;
 
-        const { dataForUpdate, dataForInsert } = await getIncrementalUploadData(data);
+        const incrementalUploadData = await getIncrementalUploadData(data);
+        const { dataForUpdate, dataForInsert } = incrementalUploadData;
 
         try {
             const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
             const callback = async () => {
-                if (dataForUpdate.length > 0) {
-                    await Promise.all(
-                        batchUpdateCollectionEntries(
-                            splunkApp,
-                            collectionName,
-                            dataForUpdate,
-                            updateErrorMsg
-                        )
-                    );
-                }
-
-                if (dataForInsert.length > 0) {
-                    await Promise.all(
-                        batchInsertCollectionEntries(
-                            splunkApp,
-                            collectionName,
-                            dataForInsert,
-                            uploadErrorMsg
-                        )
-                    );
-                }
+                await batchUpsertCollectionEntries(
+                    splunkApp,
+                    collectionName,
+                    incrementalUploadData,
+                    updateErrorMsg,
+                    uploadErrorMsg
+                );
             };
             await doKvStoreChanges(options, callback);
             showSuccessMessage(

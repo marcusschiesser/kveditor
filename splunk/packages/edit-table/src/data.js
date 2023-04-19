@@ -136,6 +136,27 @@ const batchUpdateCollectionEntries = (splunkApp, collection, newData, defaultErr
     return promises;
 };
 
+const batchUpsertCollectionEntries = async (
+    splunkApp,
+    collectionName,
+    data,
+    updateErrorMsg,
+    uploadErrorMsg
+) => {
+    const { dataForUpdate, dataForInsert } = data;
+    if (dataForUpdate.length > 0) {
+        await Promise.all(
+            batchUpdateCollectionEntries(splunkApp, collectionName, dataForUpdate, updateErrorMsg)
+        );
+    }
+
+    if (dataForInsert.length > 0) {
+        await Promise.all(
+            batchInsertCollectionEntries(splunkApp, collectionName, dataForInsert, uploadErrorMsg)
+        );
+    }
+};
+
 const doKvStoreChanges = async (
     { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg },
     callback
@@ -162,5 +183,6 @@ export {
     insertCollectionEntries,
     batchInsertCollectionEntries,
     batchUpdateCollectionEntries,
+    batchUpsertCollectionEntries,
     doKvStoreChanges,
 };
