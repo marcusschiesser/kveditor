@@ -6,8 +6,10 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import {
     batchInsertCollectionEntries,
+    batchUpsertCollectionEntries,
     deleteAllCollectionEntries,
     doKvStoreChanges,
+    getAllCollectionEntries,
 } from '../data';
 import { convertToJSONArrayFromCSVString } from '../utils/csv';
 import { checkJsonArrayCorrectFormat, projectFields } from '../utils/obj';
@@ -32,6 +34,8 @@ const backupErrorMsg = 'Error creating backup for KV Store. Please try again lat
 const deleteErrorMsg = 'Error deleting all entries. Please try again.';
 const uploadErrorMsg = 'Error uploading csv. Please try again.';
 const restoreErrorMsg = 'Error restoring KV Store. If data is lost, please contact admin.';
+const fetchAllErrorMsg = 'Error fetching all entries. Please try again.';
+const updateErrorMsg = 'Error updating entry.';
 
 // TODO(thucpn): So many props here, in the feature, we can consider create EditTable context to pass down props
 export default function KVStoreUploader({
@@ -40,6 +44,8 @@ export default function KVStoreUploader({
     collectionName,
     splunkApp,
     kvStore,
+    uploadMode,
+    _keyIncludeInCSV,
     tableMetadata,
     setInfoMessage,
     refreshVisualization,
@@ -47,6 +53,9 @@ export default function KVStoreUploader({
     const { dataFields, totalItems } = tableMetadata;
     const [uploading, setUploading] = useState(false);
     const [uploadedCSVContent, setUploadedCSVContent] = useState();
+
+    const isReplaceUploadMode = uploadMode === 'replace';
+    const primaryKey = '_key';
 
     const showErrorMessage = (message) => {
         setInfoMessage({
@@ -70,7 +79,7 @@ export default function KVStoreUploader({
     };
     const handleFileChange = (fileContent) => setUploadedCSVContent(fileContent);
 
-    const transformData = async () => {
+    const getFormattedData = async () => {
         if (uploadedCSVContent == null) {
             showErrorMessage(emptyErrorMsg);
             return false;
@@ -82,7 +91,12 @@ export default function KVStoreUploader({
             return false;
         }
 
-        const isCorrectFormat = checkJsonArrayCorrectFormat(jsonData, dataFields);
+        // If _keyIncludeInCSV = true, all entries must have _key field
+        // If _keyIncludeInCSV = false, _key field can have or not have for each entry
+        const dataFieldsForCheck = _keyIncludeInCSV
+            ? dataFields
+            : dataFields.filter((field) => field !== '_key');
+        const isCorrectFormat = checkJsonArrayCorrectFormat(jsonData, dataFieldsForCheck);
         if (!isCorrectFormat) {
             showErrorMessage(dataFieldErrorMsg);
             return false;
@@ -92,9 +106,40 @@ export default function KVStoreUploader({
         return formattedJsonData;
     };
 
-    const runUpload = async () => {
-        const data = await transformData();
-        if (!data) return;
+    const getIncrementalUploadData = async (newData) => {
+        // If there is no data in KV store, insert all new data
+        const entries = await getAllCollectionEntries(splunkApp, collectionName, fetchAllErrorMsg);
+        if (entries == null || entries.length === 0) {
+            return {
+                dataForUpdate: [],
+                dataForInsert: newData,
+            };
+        }
+
+        const entriesKeySet = new Set(entries.map((e) => e[primaryKey]));
+        const dataForUpdate = [];
+        const dataForInsert = [];
+
+        // For entries with _key, and _key exists in the database, we will update
+        // For entries without _key or _key does not exist in the database, we will create new
+        newData.forEach((entry) => {
+            const primaryKeyValue = entry[primaryKey];
+            if (primaryKeyValue && entriesKeySet.has(primaryKeyValue)) {
+                dataForUpdate.push(entry);
+            } else {
+                dataForInsert.push(entry);
+            }
+        });
+
+        return {
+            dataForUpdate,
+            dataForInsert,
+        };
+    };
+
+    const runReplaceUpload = async () => {
+        const data = await getFormattedData();
+        if (!data || data.length === 0) return;
 
         try {
             const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
@@ -114,9 +159,41 @@ export default function KVStoreUploader({
         }
     };
 
+    const runIncrementalUpload = async () => {
+        const data = await getFormattedData();
+        if (!data) return;
+
+        const incrementalUploadData = await getIncrementalUploadData(data);
+        const { dataForUpdate, dataForInsert } = incrementalUploadData;
+
+        try {
+            const options = { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg };
+            const callback = async () => {
+                await batchUpsertCollectionEntries(
+                    splunkApp,
+                    collectionName,
+                    incrementalUploadData,
+                    updateErrorMsg,
+                    uploadErrorMsg
+                );
+            };
+            await doKvStoreChanges(options, callback);
+            showSuccessMessage(
+                `CSV file successfully uploaded. Update ${dataForUpdate.length} items and added ${dataForInsert.length} items.`
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(error.message);
+        }
+    };
+
     const handleUploadCSV = async () => {
         setUploading(true);
-        await runUpload();
+        if (isReplaceUploadMode) {
+            await runReplaceUpload();
+        } else {
+            await runIncrementalUpload();
+        }
         setUploading(false);
         setUploadedCSVContent(undefined);
         setUploadModalOpen(false);
@@ -158,6 +235,8 @@ KVStoreUploader.propTypes = {
     collectionName: PropTypes.string.isRequired,
     splunkApp: PropTypes.string,
     kvStore: PropTypes.string,
+    uploadMode: PropTypes.string, // 'replace' or 'incremental'
+    _keyIncludeInCSV: PropTypes.bool, // could be undefined
     setInfoMessage: PropTypes.func.isRequired,
     refreshVisualization: PropTypes.func.isRequired,
     tableMetadata: PropTypes.shape({

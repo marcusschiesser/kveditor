@@ -25,6 +25,8 @@
         "splunkApp": "kv-editor",
         "collection": "example_collection",
         "kvStore": "example_kv",
+        "uploadMode": "incremental",
+        "_keyIncludeInCSV": false,
         "model": {
           "Score": {
             "label": "ScoreInput",

@@ -16,7 +16,6 @@
   "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.2.0",
-    "@marcusschiesser/edit-table": "^1.0.0",
     "@splunk/babel-preset": "^3.0.0",
     "@splunk/eslint-config": "^4.0.0",
     "@splunk/react-page": "^5.1.0",

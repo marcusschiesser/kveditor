@@ -120,6 +120,43 @@ const batchInsertCollectionEntries = (splunkApp, collection, newData, defaultErr
     return promises;
 };
 
+const batchUpdateCollectionEntries = (splunkApp, collection, newData, defaultErrorMsg) => {
+    const promises = [];
+    newData.forEach((entry) => {
+        promises.push(
+            updateCollectionEntry(
+                splunkApp,
+                collection,
+                entry._key,
+                entry,
+                `${defaultErrorMsg}. Entry Key: ${entry._key}`
+            )
+        );
+    });
+    return promises;
+};
+
+const batchUpsertCollectionEntries = async (
+    splunkApp,
+    collectionName,
+    data,
+    updateErrorMsg,
+    uploadErrorMsg
+) => {
+    const { dataForUpdate, dataForInsert } = data;
+    if (dataForUpdate.length > 0) {
+        await Promise.all(
+            batchUpdateCollectionEntries(splunkApp, collectionName, dataForUpdate, updateErrorMsg)
+        );
+    }
+
+    if (dataForInsert.length > 0) {
+        await Promise.all(
+            batchInsertCollectionEntries(splunkApp, collectionName, dataForInsert, uploadErrorMsg)
+        );
+    }
+};
+
 const doKvStoreChanges = async (
     { splunkApp, kvStore, backupErrorMsg, restoreErrorMsg },
     callback
@@ -145,5 +182,7 @@ export {
     deleteAllCollectionEntries,
     insertCollectionEntries,
     batchInsertCollectionEntries,
+    batchUpdateCollectionEntries,
+    batchUpsertCollectionEntries,
     doKvStoreChanges,
 };
